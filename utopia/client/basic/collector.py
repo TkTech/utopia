@@ -93,5 +93,11 @@ class MessageCollector(object):
         return self
 
     def __exit__(self, type, value, traceback):
+        self.close()
+
+    def close(self):
+        """
+        Detaches the MessageCollector from its Client.
+        """
         self._unregister_for(self._waiting)
         self._unregister_for(self._collecting)
