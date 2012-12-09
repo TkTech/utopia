@@ -24,6 +24,8 @@ class CoreClient(object):
         self._address = (host, port)
         self._ssl = ssl
 
+        self._collectors = {}
+
     def close(self):
         """
         Closes the client connection, attempting to do so gracefully.
@@ -125,14 +127,18 @@ class CoreClient(object):
                 bytes_sent = self.socket.send(to_send)
                 to_send = to_send[bytes_sent:]
 
-    def send(self, command, args, c=False):
+    def send(self, command, *args):
         """
-        Adds a new message to the outgoing message queue. If `c` is `True`,
-        the last arugment is prefixed with a colon.
+        Adds a new message to the outgoing message queue.
         """
-        if c and args:
-            args[-1] = ':{0!s}'.format(args[-1])
+        message = '{0} {1}\r\n'.format(command, ' '.join(args))
+        self._out_queue.put(message.encode('utf8'))
 
+    def send_c(self, command, *args):
+        """
+        Same as `send()`, but prefixes the last argument with a colon.
+        """
+        args[-1] = ':{arg}'.format(arg=args[-1])
         message = '{0} {1}\r\n'.format(command, ' '.join(args))
         self._out_queue.put(message.encode('utf8'))
 
