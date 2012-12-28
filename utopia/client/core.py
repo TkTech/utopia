@@ -1,10 +1,9 @@
 # -*- coding: utf8 -*-
 __all__ = ('CoreClient',)
-import ssl
-import errno
-import socket
-from collections import deque
-
+import gevent
+import gevent.ssl
+import gevent.queue
+import gevent.socket
 from utopia.protocol import parse_message
 
 
@@ -22,9 +21,8 @@ class CoreClient(object):
         self._ssl = ssl
 
         # IO Buffers & Queues
-        self._in_queue = deque()
-        self._out_queue = deque()
-        self._read_buffer = ''
+        self._in_queue = gevent.queue.Queue()
+        self._out_queue = gevent.queue.Queue()
 
     def close(self):
         if self._socket is not None:
@@ -58,7 +56,7 @@ class CoreClient(object):
     @property
     def socket(self):
         """
-        The raw gevent socket in use by this `Client`.
+        The raw socket in use by this `Client`.
         """
         return self._socket
 
@@ -79,65 +77,52 @@ class CoreClient(object):
         """
         Connect to the remote server and begin working.
         """
-        self._socket = socket.create_connection(self._address)
-        self._socket.setblocking(0)
+        self._socket = gevent.socket.create_connection(self._address)
         if self._ssl:
-            self._socket = ssl.wrap_socket(self._socket)
+            self._socket = gevent.ssl.wrap_socket(self._socket)
 
         self.event_connected()
+        self._jobs = (
+            gevent.spawn(self._read_greenlet),
+            gevent.spawn(self._write_greenlet)
+        )
 
-        while True:
-            if self._try_read():
-                # The other end killed the connection.
-                return
-            self._try_write()
-            self._event_tick()
-            yield
-
-    def _try_read(self):
+    def _read_greenlet(self):
         """
         Handles reading complete lines from the server.
         """
-        try:
+        read_buffer = ''
+        while not self._shutting_down:
             read_tmp = self.socket.recv(self._chunk_size)
-        except socket.error as e:
-            if e.errno == errno.EWOULDBLOCK:
+
+            # Remote end disconnected, either due to an error or an
+            # intentional disconnect (usually KILL).
+            if not read_tmp:
+                self.close()
                 return
-            raise
 
-        # Remote end disconnected, either due to an error or an
-        # intentional disconnect (usually KILL).
-        if not read_tmp:
-            self.close()
-            return True
+            # Handle any complete messages sitting in the buffer.
+            read_buffer += read_tmp
+            while '\r\n' in read_buffer:
+                line, read_buffer = read_buffer.split('\r\n', 1)
+                message = parse_message(line)
+                self.handle_message(message)
 
-        # Handle any complete messages sitting in the buffer.
-        self._read_buffer += read_tmp
-        while '\r\n' in self._read_buffer:
-            line, self._read_buffer = self._read_buffer.split('\r\n', 1)
-            message = parse_message(line)
-            self.handle_message(message)
-
-    def _try_write(self):
+    def _write_greenlet(self):
         """
         Handles writing complete lines to the server.
         """
-        if not self._out_queue:
-            # Nothing waiting to go out, so nothing to do.
-            return
-
-        to_send = self._out_queue.popleft()
-        bytes_sent = self.socket.send(to_send)
-        if bytes_sent != len(to_send):
-            # We didn't send the complete message, add what's left
-            # back on the front of the queue.
-            self._out_queue.appendleft(to_send[bytes_sent:])
+        while not self._shutting_down:
+            to_send = self._out_queue.get()
+            while to_send:
+                bytes_sent = self.socket.send(to_send)
+                to_send = to_send[bytes_sent:]
 
     def send(self, command, *args):
         """
         Adds a new message to the outgoing message queue.
         """
-        self._out_queue.append('{command} {args}\r\n'.format(
+        self._out_queue.put('{command} {args}\r\n'.format(
             command=command, args=' '.join(args)
         ).encode('utf8'))
 
@@ -148,7 +133,7 @@ class CoreClient(object):
         line = [command]
         line.extend(args[0:-1])
         line.append(':{0}\r\n'.format(args[-1]))
-        self._out_queue.append(' '.join(line).encode('utf8'))
+        self._out_queue.put(' '.join(line).encode('utf8'))
 
     def handle_message(self, message):
         """
@@ -159,9 +144,4 @@ class CoreClient(object):
     def event_connected(self):
         """
         Called when the client has connected to the host.
-        """
-
-    def _event_tick(self):
-        """
-        Called each time the IO loop is yielded.
         """

@@ -1,6 +1,9 @@
 # -*- coding: utf8 -*-
-__all__ = ('Client', 'Account', 'Network')
-from collections import namedtuple, defaultdict
+__all__ = ('Client', 'Account', 'Network', 'client_queue')
+import gevent
+
+from functools import wraps
+from collections import namedtuple, defaultdict, deque
 from utopia.client.core import CoreClient
 from utopia.client.channel import Channel
 
@@ -33,6 +36,14 @@ class Network(_network):
         )
 
 
+def client_queue(f):
+    @wraps(f)
+    def _f(self, *args, **kwargs):
+        for m in f(self, *args, **kwargs):
+            self._message_queue.append(m)
+    return _f
+
+
 class Client(CoreClient):
     """
     A basic client providing the generic functionality common to most
@@ -49,6 +60,8 @@ class Client(CoreClient):
         self._handlers = set([self])
         self._single_callback = defaultdict(set)
         self._channels = {}
+        self._message_queue = deque()
+        self._message_min_delay = 1.
 
     def handle_message(self, message):
         """
@@ -72,7 +85,7 @@ class Client(CoreClient):
         args = args or []
         kwargs = kwargs or {}
 
-        for callback in self._handlers:
+        for callback in list(self._handlers):
             handler = getattr(callback, method, None)
             if handler is None and default:
                 handler = getattr(callback, default, None)
@@ -127,9 +140,6 @@ class Client(CoreClient):
             self.account.realname
         )
 
-    def _event_tick(self):
-        self.do_event('event_tick', args=(self,))
-
     def channel(self, name):
         """
         Returns a :class:`Channel` object for `name`.
@@ -145,3 +155,17 @@ class Client(CoreClient):
         Default handler for server PINGs.
         """
         client.send('PING', *message.args)
+
+    def message_001(self, client, message):
+        self.do_event('event_ready', args=(client,))
+        self._check_message_queue()
+
+    def _check_message_queue(self):
+        """
+        Check the clients's message queue. If non-empty, pop a message and
+        send it.
+        """
+        if self._message_queue:
+            message = self._message_queue.popleft()
+            message[0](*message[1:])
+        gevent.spawn_later(self._message_min_delay, self._check_message_queue)
