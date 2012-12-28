@@ -60,8 +60,13 @@ class Client(CoreClient):
         self._handlers = set([self])
         self._single_callback = defaultdict(set)
         self._channels = {}
+
         self._message_queue = deque()
+        # Minimum delay between messages.
         self._message_min_delay = 1.
+
+        # Cached results of the 005 (RPL_ISUPPORT) command.
+        self._supported = {}
 
     def handle_message(self, message):
         """
@@ -92,6 +97,16 @@ class Client(CoreClient):
 
             if handler is not None:
                 handler(*args, **kwargs)
+
+    def _check_message_queue(self):
+        """
+        Check the clients's message queue. If non-empty, pop a message and
+        send it.
+        """
+        if self._message_queue:
+            message = self._message_queue.popleft()
+            message[0](*message[1:])
+        gevent.spawn_later(self._message_min_delay, self._check_message_queue)
 
     def run_once(self, message, callback):
         """
@@ -140,6 +155,10 @@ class Client(CoreClient):
             self.account.realname
         )
 
+    # ----
+    # Channel(s) interaction.
+    # ----
+
     def channel(self, name):
         """
         Returns a :class:`Channel` object for `name`.
@@ -150,6 +169,38 @@ class Client(CoreClient):
 
     __getitem__ = channel
 
+    @property
+    def channels(self):
+        """
+        A list of all the channels attached to this client.
+        """
+        return list(self._channels.keys())
+
+    def channels_by_prefix(self, prefix='#'):
+        """
+        Returns all channels beginning with `prefix` that this client
+        is currently in.
+        """
+        for channel in self.channels:
+            if channel.startswith(prefix):
+                yield channel
+
+    def channel_limit(self, prefix='#', default=None):
+        # The IRCd hasn't told us its channel limitations.
+        if 'CHANLIMIT' not in self._supported:
+            return default
+
+        chan_limit = self._supported['CHANLIMIT']
+        for limit_prefix, limit in (p.split(':') for p in chan_limit):
+            if limit_prefix == prefix:
+                return int(limit)
+
+        return default
+
+    # ----
+    # Default message handlers.
+    # ----
+
     def message_ping(self, client, message):
         """
         Default handler for server PINGs.
@@ -157,15 +208,15 @@ class Client(CoreClient):
         client.send('PING', *message.args)
 
     def message_001(self, client, message):
+        # Once we've recieved 001, we can start sending out non-handshake
+        # messages.
         self.do_event('event_ready', args=(client,))
         self._check_message_queue()
 
-    def _check_message_queue(self):
+    def message_005(self, client, message):
         """
-        Check the clients's message queue. If non-empty, pop a message and
-        send it.
+        Cache the results of the 005 (RPL_ISUPPORT) response.
         """
-        if self._message_queue:
-            message = self._message_queue.popleft()
-            message[0](*message[1:])
-        gevent.spawn_later(self._message_min_delay, self._check_message_queue)
+        for result in message.args[1:-1]:
+            param, _, value = result.partition('=')
+            self._supported[param] = value
