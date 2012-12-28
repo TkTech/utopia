@@ -2,7 +2,7 @@
 __all__ = ('Client', 'Account', 'Network')
 from collections import namedtuple, defaultdict
 from utopia.client.core import CoreClient
-from utopia.protocol.messages import parse_prefix
+from utopia.client.channel import Channel
 
 _account = namedtuple('Account', ['nickname', 'username', 'realname'])
 _network = namedtuple('Network', ['host', 'port', 'ssl', 'password'])
@@ -33,74 +33,6 @@ class Network(_network):
         )
 
 
-class Channel(object):
-    def __init__(self, client, name):
-        self._name = name
-        self._client = client
-        self._client.add_handler(self)
-        self._users = set()
-
-    @property
-    def client(self):
-        return self._client
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def users(self):
-        return self._users
-
-    def join(self, password=None):
-        """
-        Attempt to join the channel.
-        """
-        if password:
-            self.client.send('JOIN', self.name, password)
-        else:
-            self.client.send('JOIN', self.name)
-
-    def message_353(self, client, message):
-        to, names = message.args[2:]
-        if to == self.name:
-            self._users |= set(names.split(' '))
-
-    def message_part(self, client, message):
-        if message.args[0] == self.name:
-            nickname, _, _ = parse_prefix(message.prefix)
-            self._users.discard(nickname)
-
-    def message_join(self, client, message):
-        if message.args[0] == self.name:
-            nickname, _, _ = parse_prefix(message.prefix)
-            self._users.add(nickname)
-
-    def message_kick(self, client, message):
-        to, by, who = message.args[:2]
-        if to == self.name:
-            self._users.discard(who)
-
-    def message_quit(self, client, message):
-        nickname, _, _ = parse_prefix(message.prefix)
-        self._users.dicard(nickname)
-
-    def send(self, message):
-        """
-        Sends a PRIVMSG to the channel.
-        """
-        self.client.send_c('PRIVMSG', self.name, message)
-
-    def notice(self, message):
-        """
-        Sends a NOTICE to the channel.
-        """
-        self.client.send_c('NOTICE', self.name, message)
-
-    def __contains__(self, name):
-        return name.lower() in [u.lower() for u in self._users]
-
-
 class Client(CoreClient):
     """
     A basic client providing the generic functionality common to most
@@ -124,21 +56,29 @@ class Client(CoreClient):
         handlers and calling them.
         """
         command = message.command.lower()
-        for callback in self._handlers:
-            handler = getattr(callback, 'message_{command}'.format(
-                command=command
-            ), None)
-            if handler is None:
-                handler = getattr(callback, 'message_not_handled', None)
-
-            if handler is not None:
-                self._dispatch_handler(handler, self, message)
+        self.do_event(
+            'message_{0}'.format(command),
+            default='message_not_handled',
+            args=(self, message)
+        )
 
         # One-off callbacks added with run_once
         callbacks = self._single_callback[command]
         while callbacks:
             callback = callbacks.pop()
             callback(self, message)
+
+    def do_event(self, method, default=None, args=None, kwargs=None):
+        args = args or []
+        kwargs = kwargs or {}
+
+        for callback in self._handlers:
+            handler = getattr(callback, method, None)
+            if handler is None and default:
+                handler = getattr(callback, default, None)
+
+            if handler is not None:
+                handler(*args, **kwargs)
 
     def run_once(self, message, callback):
         """
@@ -174,14 +114,6 @@ class Client(CoreClient):
     def network(self):
         return self._network
 
-    def _dispatch_handler(self, handler, client, message):
-        """
-        Called to dispatch `message` to `handler` on behalf of `client`.
-        Replacing this method allows you to, for example, use threads for
-        handlers.
-        """
-        handler(client, message)
-
     def event_connected(self):
         if self.network.password:
             self.send('PASS', self.network.password)
@@ -194,6 +126,9 @@ class Client(CoreClient):
             '*',
             self.account.realname
         )
+
+    def _event_tick(self):
+        self.do_event('event_tick', args=(self,))
 
     def channel(self, name):
         """

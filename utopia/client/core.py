@@ -91,6 +91,7 @@ class CoreClient(object):
                 # The other end killed the connection.
                 return
             self._try_write()
+            self._event_tick()
             yield
 
     def _try_read(self):
@@ -158,4 +159,9 @@ class CoreClient(object):
     def event_connected(self):
         """
         Called when the client has connected to the host.
+        """
+
+    def _event_tick(self):
+        """
+        Called each time the IO loop is yielded.
         """
