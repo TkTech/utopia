@@ -1,10 +1,9 @@
 # -*- coding: utf8 -*-
 __all__ = ('CoreClient',)
-
-import gevent
-import gevent.ssl
-import gevent.socket
-import gevent.queue
+import ssl
+import errno
+import socket
+from collections import deque
 
 from utopia.protocol import parse_message
 
@@ -15,8 +14,6 @@ class CoreClient(object):
     IO.
     """
     def __init__(self, host, port=6667, ssl=False):
-        self._in_queue = gevent.queue.Queue()
-        self._out_queue = gevent.queue.Queue()
         self._socket = None
         self._chunk_size = 4096
         self._shutting_down = False
@@ -24,15 +21,14 @@ class CoreClient(object):
         self._address = (host, port)
         self._ssl = ssl
 
-        self._collectors = {}
+        # IO Buffers & Queues
+        self._in_queue = deque()
+        self._out_queue = deque()
+        self._read_buffer = ''
 
     def close(self):
-        """
-        Closes the client connection, attempting to do so gracefully.
-        Automatically called when the `Client` is garbage collected.
-        """
-        self._shutting_down = True
-        gevent.joinall(self._jobs)
+        if self._socket is not None:
+            self._socket.close()
 
     @property
     def host(self):
@@ -81,57 +77,66 @@ class CoreClient(object):
 
     def connect(self):
         """
-        Connect to the remote server and begin working, returning
-        immediately without blocking.
+        Connect to the remote server and begin working.
         """
-        self._socket = gevent.socket.create_connection(self._address)
-
-        # If we want to connect over SSL we need to use gevent's
-        # utility wrapper to setup the socket.
+        self._socket = socket.create_connection(self._address)
+        self._socket.setblocking(0)
         if self._ssl:
-            self._socket = gevent.ssl.wrap_socket(self._socket)
+            self._socket = ssl.wrap_socket(self._socket)
 
-        self._jobs = (
-            gevent.spawn(self._read_greenlet),
-            gevent.spawn(self._write_greenlet)
-        )
+        self.event_connected()
 
-    def _read_greenlet(self):
+        while True:
+            if self._try_read():
+                # The other end killed the connection.
+                return
+            self._try_write()
+            yield
+
+    def _try_read(self):
         """
         Handles reading complete lines from the server.
         """
-        read_buffer = ''
-        while not self._shutting_down:
+        try:
             read_tmp = self.socket.recv(self._chunk_size)
-
-            # Remote end disconnected, either due to an error or an
-            # intentional disconnect (usually KILL).
-            if not read_tmp:
-                self.close()
+        except socket.error as e:
+            if e.errno == errno.EWOULDBLOCK:
                 return
+            raise
 
-            # Handle any complete messages sitting in the buffer.
-            read_buffer += read_tmp
-            while '\r\n' in read_buffer:
-                line, read_buffer = read_buffer.split('\r\n', 1)
-                message = parse_message(line)
-                self.handle_message(message)
+        # Remote end disconnected, either due to an error or an
+        # intentional disconnect (usually KILL).
+        if not read_tmp:
+            self.close()
+            return True
 
-    def _write_greenlet(self):
+        # Handle any complete messages sitting in the buffer.
+        self._read_buffer += read_tmp
+        while '\r\n' in self._read_buffer:
+            line, self._read_buffer = self._read_buffer.split('\r\n', 1)
+            message = parse_message(line)
+            self.handle_message(message)
+
+    def _try_write(self):
         """
         Handles writing complete lines to the server.
         """
-        while not self._shutting_down:
-            to_send = self._out_queue.get()
-            while to_send:
-                bytes_sent = self.socket.send(to_send)
-                to_send = to_send[bytes_sent:]
+        if not self._out_queue:
+            # Nothing waiting to go out, so nothing to do.
+            return
+
+        to_send = self._out_queue.popleft()
+        bytes_sent = self.socket.send(to_send)
+        if bytes_sent != len(to_send):
+            # We didn't send the complete message, add what's left
+            # back on the front of the queue.
+            self._out_queue.appendleft(to_send[bytes_sent:])
 
     def send(self, command, *args):
         """
         Adds a new message to the outgoing message queue.
         """
-        self._out_queue.put('{command} {args}\r\n'.format(
+        self._out_queue.append('{command} {args}\r\n'.format(
             command=command, args=' '.join(args)
         ).encode('utf8'))
 
@@ -142,10 +147,15 @@ class CoreClient(object):
         line = [command]
         line.extend(args[0:-1])
         line.append(':{0}\r\n'.format(args[-1]))
-        self._out_queue.put(' '.join(line).encode('utf8'))
+        self._out_queue.append(' '.join(line).encode('utf8'))
 
     def handle_message(self, message):
         """
         Called each time a complete message is read from the socket.
         """
         raise NotImplementedError()
+
+    def event_connected(self):
+        """
+        Called when the client has connected to the host.
+        """
