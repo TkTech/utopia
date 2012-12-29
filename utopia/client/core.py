@@ -25,6 +25,7 @@ class CoreClient(object):
         self._out_queue = gevent.queue.Queue()
 
     def close(self):
+        self._shutting_down = True
         if self._socket is not None:
             self._socket.close()
 
