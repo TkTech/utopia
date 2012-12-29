@@ -186,14 +186,21 @@ class Client(CoreClient):
                 yield channel
 
     def channel_limit(self, prefix='#', default=None):
+        """
+        Returns the maximum number of channels per connection allowed by this
+        IRCd for the given channel `prefix`, or `default` if it is not known.
+        """
         # The IRCd hasn't told us its channel limitations.
         if 'CHANLIMIT' not in self._supported:
             return default
 
-        chan_limit = self._supported['CHANLIMIT']
+        chan_limit = self._supported['CHANLIMIT'].split(',')
         for limit_prefix, limit in (p.split(':') for p in chan_limit):
             if limit_prefix == prefix:
-                return int(limit)
+                try:
+                    return int(limit)
+                except ValueError:
+                    return default
 
         return default
 
