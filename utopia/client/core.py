@@ -123,7 +123,7 @@ class CoreClient(object):
         """
         Adds a new message to the outgoing message queue.
         """
-        self._out_queue.put('{command} {args}\r\n'.format(
+        self._out_queue.put(u'{command} {args}\r\n'.format(
             command=command, args=' '.join(args)
         ).encode('utf8'))
 
@@ -133,8 +133,8 @@ class CoreClient(object):
         """
         line = [command]
         line.extend(args[0:-1])
-        line.append(':{0}\r\n'.format(args[-1]))
-        self._out_queue.put(' '.join(line).encode('utf8'))
+        line.append(u':{0}\r\n'.format(args[-1]))
+        self._out_queue.put(u' '.join(line).encode('utf8'))
 
     def handle_message(self, message):
         """
