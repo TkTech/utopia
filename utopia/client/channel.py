@@ -108,7 +108,7 @@ class Channel(object):
         Track network QUITs to keep our user list up to date.
         """
         nickname, _, _ = parse_prefix(message.prefix)
-        self._users.dicard(nickname)
+        self._users.discard(nickname)
 
     @channel_queue
     def send(self, message):
