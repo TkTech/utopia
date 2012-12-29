@@ -212,7 +212,7 @@ class Client(CoreClient):
         """
         Default handler for server PINGs.
         """
-        client.send('PING', *message.args)
+        client.send('PONG', *message.args)
 
     def message_001(self, client, message):
         # Once we've recieved 001, we can start sending out non-handshake
