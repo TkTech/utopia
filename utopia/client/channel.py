@@ -29,14 +29,23 @@ class Channel(object):
 
     @property
     def client(self):
+        """
+        The client this Channel object is attached to.
+        """
         return self._client
 
     @property
     def name(self):
+        """
+        The channel name.
+        """
         return self._name
 
     @property
     def users(self):
+        """
+        A set() containing all the users currently in the channel.
+        """
         return self._users
 
     def join(self, password=None):
@@ -67,21 +76,37 @@ class Channel(object):
             self._check_message_queue()
 
     def message_part(self, client, message):
+        """
+        Track channel PARTs to keep our user list up to date.
+        """
         if message.args[0] == self.name:
             nickname, _, _ = parse_prefix(message.prefix)
             self._users.discard(nickname)
 
     def message_join(self, client, message):
+        """
+        Track channel JOINs to keep our user list up to date.
+        """
         if message.args[0] == self.name:
             nickname, _, _ = parse_prefix(message.prefix)
             self._users.add(nickname)
 
     def message_kick(self, client, message):
-        to, by, who = message.args[:2]
+        """
+        Track channel KICKs to keep our user list up to date.
+        """
+        to, who = message.args[:2]
         if to == self.name:
             self._users.discard(who)
+            if who.lower() == self.client.account.nickname.lower():
+                # It's us who got kicked (that was mean)
+                self._joined = False
+                self._users.clear()
 
     def message_quit(self, client, message):
+        """
+        Track network QUITs to keep our user list up to date.
+        """
         nickname, _, _ = parse_prefix(message.prefix)
         self._users.dicard(nickname)
 
