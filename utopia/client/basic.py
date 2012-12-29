@@ -227,3 +227,27 @@ class Client(CoreClient):
         for result in message.args[1:-1]:
             param, _, value = result.partition('=')
             self._supported[param] = value
+
+    def message_433(self, client, message):
+        """
+        Handle nickname already in use.
+        """
+        next_nick = self.next_nickname()
+        self._account = self._account._replace(nickname=next_nick)
+
+        self.send('NICK', self.account.nickname)
+        self.send(
+            'USER',
+            self.account.username,
+            '8',
+            '*',
+            self.account.realname
+        )
+
+    def next_nickname(self):
+        """
+        The nickname the client is attempting to use is already in use
+        or otherwise invalid, so return a new one. By default, just appends
+        a '_' to the current nick.
+        """
+        return self._account.nickname + '_'
