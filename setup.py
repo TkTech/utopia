@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="UtopiaIRC",
-    version="0.1.4",
+    version="0.1.5",
     description="Simple gevent-based IRC bot, because why not.",
     url="http://github.com/TkTech/utopia",
     author="Tyler Kennedy",
