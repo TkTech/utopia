@@ -42,6 +42,13 @@ class Channel(object):
         return self._name
 
     @property
+    def l_name(self):
+        """
+        The channel name, lowercase.
+        """
+        return self._name.lower()
+
+    @property
     def users(self):
         """
         A set() containing all the users currently in the channel.
@@ -63,7 +70,7 @@ class Channel(object):
         Handle RPL_NAMREPLY
         """
         to, names = message.args[2:]
-        if to == self.name:
+        if to.lower() == self.l_name:
             self._users |= set(names.split(' '))
 
     def message_366(self, client, message):
@@ -71,7 +78,7 @@ class Channel(object):
         Handle RPL_ENDOFNAMES
         """
         to = message.args[1]
-        if to == self.name:
+        if to.lower() == self.l_name:
             self._joined = True
             self._check_message_queue()
 
@@ -79,7 +86,7 @@ class Channel(object):
         """
         Track channel PARTs to keep our user list up to date.
         """
-        if message.args[0] == self.name:
+        if message.args[0].lower() == self.l_name:
             nickname, _, _ = parse_prefix(message.prefix)
             self._users.discard(nickname)
 
@@ -87,7 +94,7 @@ class Channel(object):
         """
         Track channel JOINs to keep our user list up to date.
         """
-        if message.args[0] == self.name:
+        if message.args[0].lower() == self.l_name:
             nickname, _, _ = parse_prefix(message.prefix)
             self._users.add(nickname)
 
@@ -96,7 +103,7 @@ class Channel(object):
         Track channel KICKs to keep our user list up to date.
         """
         to, who = message.args[:2]
-        if to == self.name:
+        if to.lower() == self.l_name:
             self._users.discard(who)
             if who.lower() == self.client.account.nickname.lower():
                 # It's us who got kicked (that was mean)
