@@ -1,9 +1,13 @@
 # -*- coding: utf8 -*-
 __all__ = ('CoreClient',)
+import errno
+import socket
+
 import gevent
 import gevent.ssl
 import gevent.queue
 import gevent.socket
+
 from utopia.protocol import parse_message
 
 
@@ -116,7 +120,15 @@ class CoreClient(object):
         while not self._shutting_down:
             to_send = self._out_queue.get()
             while to_send:
-                bytes_sent = self.socket.send(to_send)
+                try:
+                    bytes_sent = self.socket.send(to_send)
+                except socket.error as e:
+                    if e.errno == errno.EBADF:
+                        # Catch and handle Errno #9, bad file
+                        # descriptor.
+                        self.close()
+                        self.event_disconnected()
+
                 to_send = to_send[bytes_sent:]
 
     def send(self, command, *args):
@@ -145,4 +157,9 @@ class CoreClient(object):
     def event_connected(self):
         """
         Called when the client has connected to the host.
+        """
+
+    def event_disconnected(self):
+        """
+        Called when the client has disconnected (for any reason).
         """
