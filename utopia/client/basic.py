@@ -147,7 +147,7 @@ class Client(CoreClient):
             self.send('PASS', self.network.password)
 
         self.send('NICK', self.account.nickname)
-        self.send(
+        self.send_c(
             'USER',
             self.account.username,
             '8',
