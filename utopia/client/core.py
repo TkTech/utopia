@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 __all__ = ('CoreClient',)
+import ssl
 import errno
 import socket
 
@@ -84,7 +85,12 @@ class CoreClient(object):
         """
         self._socket = gevent.socket.create_connection(self._address)
         if self._ssl:
-            self._socket = gevent.ssl.wrap_socket(self._socket)
+            try:
+                self._socket = gevent.ssl.wrap_socket(self._socket)
+            except ssl.SSLError:
+                self.close()
+                self.event_disconnected
+                return
 
         self.event_connected()
         self._jobs = (
