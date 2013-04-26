@@ -1,5 +1,6 @@
 # -*- coding: utf8 -*-
 __all__ = ('CoreClient',)
+import sys
 import ssl
 import errno
 import socket
@@ -88,6 +89,7 @@ class CoreClient(object):
             try:
                 self._socket = gevent.ssl.wrap_socket(self._socket)
             except ssl.SSLError:
+                sys.stderr.write('-> {a}\n'.format(a=self.address))
                 self.close()
                 self.event_disconnected
                 return
@@ -129,6 +131,7 @@ class CoreClient(object):
                 try:
                     bytes_sent = self.socket.send(to_send)
                 except socket.error as e:
+                    sys.stderr.write('-> {a}\n'.format(a=self.address))
                     if e.errno == errno.EBADF:
                         # Catch and handle Errno #9, bad file
                         # descriptor.
