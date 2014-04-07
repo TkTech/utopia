@@ -175,6 +175,13 @@ class IRCClient(object):
             self.socket.sendall(next_message)
 
     def send(self, command, *args):
+        """
+        Sends an IRC message to the server. The last argument (if any)
+        will be prepended by ':'.
+
+        :param command: The command to send (ex: PING, NICK)
+        :param *args: Arguments for the given command.
+        """
         message = [command]
         if args:
             message.extend(args[:-1])
