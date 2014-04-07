@@ -55,6 +55,7 @@ Icon
 
 # Vim cruft
 *.swp
+*.swo
 
 # Testing cruft
 test/ngircd.pid
