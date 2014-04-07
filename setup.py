@@ -18,7 +18,8 @@ setup(
     ],
     packages=find_packages(),
     install_requires=[
-        'gevent'
+        'gevent',
+        'blinker'
     ],
     tests_require=[
         'psutil',
