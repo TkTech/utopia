@@ -2,6 +2,7 @@
 """
 Utility plugins, typically used for debugging and tests.
 """
+import logging
 
 
 class RecPlugin(object):
@@ -34,3 +35,25 @@ class RecPlugin(object):
             if command == command:
                 return True
         return False
+
+
+class LogPlugin(object):
+    def __init__(self, logger=None):
+        self.logger = logger or logging.getLogger('LogPlugin')
+
+    def bind(self, client):
+        client.on_raw_message.connect(
+            self.have_raw_message,
+            sender=client
+        )
+        return self
+
+    def have_raw_message(self, client, prefix, command, args):
+        self.logger.debug(
+            '{client.host}: ({prefix}) {command} {args}'.format(
+                client=client,
+                prefix=prefix,
+                command=command,
+                args=args
+            )
+        )
