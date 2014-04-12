@@ -31,8 +31,8 @@ class RecPlugin(object):
             client.terminate()
 
     def did_recieve(self, command):
-        for prefix, command, args in self.recieved:
-            if command == command:
+        for prefix, command_recv, args in self.recieved:
+            if command_recv == command:
                 return True
         return False
 
