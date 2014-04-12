@@ -62,7 +62,7 @@ class IRCClient(object):
     on_connect = Signal()
     on_raw_message = Signal()
 
-    def __init__(self, identity, host, port=6667, ssl=False):
+    def __init__(self, identity, host, port=6667, ssl=False, plugins=None):
         assert(isinstance(ssl, bool))
         assert(isinstance(port, (int, long)))
 
@@ -86,6 +86,9 @@ class IRCClient(object):
         # Maximum number of bytes to read from the socket in one
         # call to recv().
         self._chunk_size = 4096
+
+        # Setup plugins.
+        self._plugins = [p.bind(self) for p in plugins or []]
 
     @property
     def host(self):
@@ -189,3 +192,9 @@ class IRCClient(object):
         message.append('\r\n')
 
         self._message_queue.put(u' '.join(message))
+
+    def terminate(self, block=True):
+        """
+        Terminate IO workers immediately.
+        """
+        self._io_workers.kill(block=block)
