@@ -4,7 +4,7 @@ Utility plugins, typically used for debugging and tests.
 """
 
 
-class TestPlugin(object):
+class RecPlugin(object):
     def __init__(self, terminate_on=None):
         """
         A utility plugin to log messages that occur dugin

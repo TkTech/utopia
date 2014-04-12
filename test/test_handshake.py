@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from utopia.client import IRCClient, Identity
 from utopia.plugins.handshake import HandshakePlugin
-from utopia.plugins.util import TestPlugin
+from utopia.plugins.util import RecPlugin
 
 
 def test_handshake_success():
@@ -10,11 +10,11 @@ def test_handshake_success():
     """
     identity = Identity('testbot', password='password')
 
-    test_plugin = TestPlugin(terminate_on=('001',))
+    rec_plugin = RecPlugin(terminate_on=('001',))
 
     client = IRCClient(identity, 'localhost', plugins=[
         HandshakePlugin,
-        test_plugin
+        rec_plugin
     ])
 
     result = client.connect()
@@ -22,4 +22,4 @@ def test_handshake_success():
 
     # Wait until the read and write IO tasks die.
     client._io_workers.join(timeout=5)
-    assert(test_plugin.did_recieve('001'))
+    assert(rec_plugin.did_recieve('001'))
