@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from utopia.client import IRCClient, Identity
 from utopia.plugins.handshake import HandshakePlugin
-from utopia.plugins.util import RecPlugin
+from utopia.plugins.util import RecPlugin, LogPlugin
 
 
 def test_handshake_success():
@@ -14,7 +14,8 @@ def test_handshake_success():
 
     client = IRCClient(identity, 'localhost', plugins=[
         HandshakePlugin,
-        rec_plugin
+        rec_plugin,
+        LogPlugin()
     ])
 
     result = client.connect()
