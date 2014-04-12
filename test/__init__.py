@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os.path
 import subprocess
+import logging
 
 import psutil
 
@@ -24,6 +25,10 @@ def setup():
         line = result.stdout.readline()
         if 'now listening' in line.lower():
             break
+
+    # Default configuration for the LogPlugin.
+    logger = logging.getLogger('LogPlugin')
+    logger.setLevel(logging.DEBUG)
 
 
 def teardown():
