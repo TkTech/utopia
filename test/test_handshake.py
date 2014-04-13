@@ -8,7 +8,7 @@ def test_handshake_success():
     """
     Ensure the handshake works when configured properly.
     """
-    identity = Identity('testbot', password='password')
+    identity = Identity('testbot1', password='password')
 
     rec_plugin = RecPlugin(terminate_on=('001',))
 
@@ -21,6 +21,5 @@ def test_handshake_success():
     result = client.connect()
     assert(result.get() is True)
 
-    # Wait until the read and write IO tasks die.
     client._io_workers.join(timeout=5)
     assert(rec_plugin.did_recieve('001'))

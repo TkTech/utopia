@@ -4,6 +4,8 @@ Utility plugins, typically used for debugging and tests.
 """
 import logging
 
+from utopia import signals
+
 
 class RecPlugin(object):
     def __init__(self, terminate_on=None):
@@ -18,7 +20,7 @@ class RecPlugin(object):
         self.recieved = []
 
     def bind(self, client):
-        client.on_raw_message.connect(
+        signals.on_raw_message.connect(
             self.have_raw_message,
             sender=client
         )
@@ -42,7 +44,7 @@ class LogPlugin(object):
         self.logger = logger or logging.getLogger('LogPlugin')
 
     def bind(self, client):
-        client.on_raw_message.connect(
+        signals.on_raw_message.connect(
             self.have_raw_message,
             sender=client
         )

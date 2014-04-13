@@ -7,8 +7,8 @@ import gevent.pool
 import gevent.event
 import gevent.queue
 import gevent.socket
-from blinker import Signal
 
+from utopia import signals
 from utopia.parsing import unpack_message
 
 
@@ -30,11 +30,6 @@ class Identity(object):
     Manages the "identity" of a client, including the nickname,
     username, realname, and server password.
     """
-    on_nickname_failed = Signal(doc="""
-    The nickname the client attempted to use was rejected, either due
-    to a collision or length/character restrictions.
-    """)
-
     def __init__(self, nick, user=None, real=None, password=None):
         self._nick = nick
         self._user = user or nick
@@ -59,9 +54,6 @@ class Identity(object):
 
 
 class IRCClient(object):
-    on_connect = Signal()
-    on_raw_message = Signal()
-
     def __init__(self, identity, host, port=6667, ssl=False, plugins=None):
         assert(isinstance(ssl, bool))
         assert(isinstance(port, (int, long)))
@@ -133,7 +125,7 @@ class IRCClient(object):
 
         # Wait until we can write before continuing.
         gevent.socket.wait_write(self.socket.fileno(), timeout=timeout)
-        gevent.spawn(self.on_connect.send, self)
+        gevent.spawn(signals.on_connect.send, self)
 
         # Start our read/write workers.
         self._io_workers.spawn(self._io_read)
@@ -159,10 +151,16 @@ class IRCClient(object):
                 line, message_buffer = message_buffer.split('\r\n', 1)
                 message = unpack_message(line)
                 gevent.spawn(
-                    self.on_raw_message.send,
+                    signals.on_raw_message.send,
                     self,
                     prefix=message[0],
                     command=message[1],
+                    args=message[2]
+                )
+                gevent.spawn(
+                    getattr(signals.m, 'on_' + message[1]).send,
+                    self,
+                    prefix=message[0],
                     args=message[2]
                 )
 
