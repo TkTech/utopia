@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
+import socket
 
 import gevent
 import gevent.ssl
@@ -128,7 +129,10 @@ class IRCClient(object):
         gevent.spawn(signals.on_connect.send, self)
 
         # Start our read/write workers.
-        self._io_workers.spawn(self._io_read)
+        read = self._io_workers.spawn(self._io_read)
+        # the read greenlet exits (e.g. other end closes connection, timeout)
+        # but the write greenlet will still wait for information
+        read.link(lambda g: self.terminate())
         self._io_workers.spawn(self._io_write)
 
         return True
@@ -139,7 +143,12 @@ class IRCClient(object):
         message_buffer = ''
         while True:
             gevent.socket.wait_read(self.socket.fileno())
-            message_chunk = self.socket.recv(self._chunk_size)
+
+            message_chunk = ''
+            try:
+                message_chunk = self.socket.recv(self._chunk_size)
+            except socket.error:
+                pass
 
             if not message_chunk:
                 # If recv() returned but the result is empty, then
@@ -195,4 +204,11 @@ class IRCClient(object):
         """
         Terminate IO workers immediately.
         """
+        try:
+            self.socket.shutdown(gevent.socket.SHUT_RDWR)
+            self.socket.close()
+        except (OSError, socket.error):
+            # Connection already down
+            pass
+
         self._io_workers.kill(block=block)
