@@ -35,6 +35,15 @@ class CoreClient(object):
         if self._socket is not None:
             self._socket.close()
 
+    def terminate(self, block=True, timeout=None):
+        try:
+            self.close()
+        except (OSError, socket.error):
+            pass
+
+        self._jobs[0].kill(block=block, timeout=timeout)
+        self._jobs[1].kill(block=block, timeout=timeout)
+
     @property
     def host(self):
         """
@@ -100,19 +109,24 @@ class CoreClient(object):
             gevent.spawn(self._write_greenlet)
         )
 
+        self._jobs[0].link(lambda x: self.terminate())
+
     def _read_greenlet(self):
         """
         Handles reading complete lines from the server.
         """
         read_buffer = ''
         while not self._shutting_down:
-            read_tmp = self.socket.recv(self._chunk_size)
+            read_tmp = ''
+            try:
+                read_tmp = self.socket.recv(self._chunk_size)
+            except socket.error:
+                pass
 
             # Remote end disconnected, either due to an error or an
             # intentional disconnect (usually KILL).
             if not read_tmp:
-                self.close()
-                return
+                break
 
             # Handle any complete messages sitting in the buffer.
             read_buffer += read_tmp
