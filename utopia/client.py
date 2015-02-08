@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
 from functools import wraps
 import socket
 
@@ -9,8 +10,8 @@ import gevent.event
 import gevent.queue
 import gevent.socket
 
+import utopia.parsing
 from utopia import signals
-from utopia.parsing import unpack_message
 
 
 def async_result(f):
@@ -162,7 +163,7 @@ class CoreClient(object):
             message_buffer += message_chunk
             while '\r\n' in message_buffer:
                 line, message_buffer = message_buffer.split('\r\n', 1)
-                message = unpack_message(line)
+                message = utopia.parsing.unpack_message(line)
                 gevent.spawn(
                     signals.on_raw_message.send,
                     self,
@@ -229,3 +230,147 @@ class CoreClient(object):
             pass
 
         self._io_workers.kill(block=block)
+
+
+class ProtocolClient(CoreClient):
+    def action(self, target, action):
+        self.ctcp(target, (('ACTION', action),))
+
+    def admin(self, server=''):
+        self.sendraw('ADMIN {}'.format(server))
+
+    def ctcp(self, target, messages):
+        '''sends a ctcp request to target.
+        messages is a list containing (tag, data) tuples,
+        data may be None.'''
+        self.privmsg(target, utopia.parsing.make_ctcp_string(messages))
+
+    def ctcp_reply(self, target, messages):
+        '''sends a ctcp reply to target.
+        messages is a list containing (tag, data) tuples,
+        data may be None.'''
+        self.notice(target, utopia.parsing.make_ctcp_string(messages))
+
+    def globops(self, text):
+        self.sendraw('GLOBOPS :{}'.format(text))
+
+    def info(self, server=''):
+        self.sendraw('INFO {}'.format(server))
+
+    def invite(self, nick, channel):
+        self.sendraw('INVITE {} {}'.format(nick, channel))
+
+    def ison(self, nicks):
+        self.sendraw('ISON {}'.format(' '.join(nicks)))
+
+    def join_channel(self, channel, key=''):
+        self.sendraw('JOIN {} {}'.format(channel, key))
+
+    def kick(self, channel, nick, comment=''):
+        self.sendraw('KICK {} {} :{}'.format(channel, nick, comment))
+
+    def links(self, server_mask, remote_server=''):
+        cmd = 'LINKS'
+        if remote_server:
+            cmd += ' ' + remote_server
+        cmd += ' ' + server_mask
+        self.sendraw(cmd)
+
+    def list(self, channels=None, server=''):
+        cmd = 'LIST'
+        if channels is not None:
+            cmd = 'LIST {}'.format(','.join(channels))
+        cmd += ' ' + server
+        self.sendraw(cmd)
+
+    def lusers(self, server=''):
+        self.sendraw('LUSERS {}'.format(server))
+
+    def mode(self, channel, mode, user=''):
+        self.sendraw('MODE {} {} {}'.format(channel, mode, user))
+
+    def motd(self, server=''):
+        self.sendraw('MOTD {}'.format(server))
+
+    def names(self, channel=''):
+        self.sendraw('NAMES {}'.format(channel))
+
+    def nick(self, newnick):
+        self.sendraw('NICK {}'.format(newnick))
+
+    def notice(self, target, text):
+        for part in utopia.parsing.ssplit(text, 420):
+            self.sendraw('NOTICE {} :{}'.format(
+                target, ''.join(filter(None, part)))
+            )
+
+    def oper(self, nick, password):
+        self.sendraw('OPER {} {}'.format(nick, password))
+
+    def part(self, channel, message=''):
+        self.sendraw('PART {} {}'.format(channel, message))
+
+    def pass_(self, password):
+        self.sendraw('PASS {}'.format(password))
+
+    def ping(self, target, target2=''):
+        self.sendraw('PING {} {}'.format(target, target2))
+
+    def pong(self, target, target2=''):
+        self.sendraw('PONG {} {}'.format(target, target2))
+
+    def privmsg(self, target, text):
+        for part in utopia.parsing.ssplit(text, 420):
+            self.sendraw('PRIVMSG {} :{}'.format(
+                target, ''.join(filter(None, part)))
+            )
+
+    def privmsg_many(self, targets, text):
+        for part in utopia.parsing.ssplit(text, 420):
+            self.sendraw('PRIVMSG {} :{}'.format(
+                ','.join(targets), ''.join(filter(None, part))))
+
+    def quit(self, message=''):
+        self.sendraw('QUIT :{}'.format(message))
+
+    def squit(self, server, comment=''):
+        self.sendraw('SQUIT {} :{}'.format(server, comment))
+
+    def stats(self, statstype, server=''):
+        self.sendraw('STATS {} {}'.format(statstype, server))
+
+    def time(self, server=''):
+        self.sendraw('TIME {}'.format(server))
+
+    def topic(self, channel, new_topic=None):
+        if new_topic is None:
+            self.sendraw('TOPIC {}'.format(channel))
+        else:
+            self.sendraw('TOPIC {} :{}'.format(channel, new_topic))
+
+    def trace(self, target=''):
+        self.sendraw('TRACE {}'.format(target))
+
+    def user(self, username, realname):
+        self.sendraw('USER {} 0 * :{}'.format(username, realname))
+
+    def userhost(self, nick):
+        self.sendraw('USERHOST {}'.format(nick))
+
+    def users(self, server=''):
+        self.sendraw('USERS {}'.format(server))
+
+    def version(self, server=''):
+        self.sendraw('VERSION {}'.format(server))
+
+    def wallops(self, text):
+        self.sendraw('WALLOPS :{}'.format(text))
+
+    def who(self, target, op=''):
+        self.sendraw('WHO {} {}'.format(target, op))
+
+    def whois(self, target):
+        self.sendraw('WHOIS {}'.format(target))
+
+    def whowas(self, nick, max='', server=''):
+        self.sendraw('WHOWAS {} {} {}'.format(nick, max, server))
