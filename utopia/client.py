@@ -133,6 +133,10 @@ class CoreClient(object):
         # the read greenlet exits (e.g. other end closes connection, timeout)
         # but the write greenlet will still wait for information
         read.link(lambda g: self.terminate())
+        # notify everyone, the client disconnected
+        # the callable will already be called in its own greenlet, so no
+        # need to call send via gevent.spawn
+        read.link(lambda g: signals.on_disconnect.send(self))
         self._io_workers.spawn(self._io_write)
 
         return True

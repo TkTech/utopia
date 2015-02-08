@@ -23,6 +23,12 @@ messages are sent.
 :param client: The client connecting.
 """)
 
+on_disconnect = signal('on-disconnect', """
+Triggered when the client disconnects from a server.
+
+:param client: The client disconnecting.
+""")
+
 on_raw_message = signal('on-raw-message', doc="""
 Triggered whenever a message is recieved from the server.
 
