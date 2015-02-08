@@ -12,6 +12,7 @@ import gevent.socket
 
 import utopia.parsing
 from utopia import signals
+from utopia.plugins.protocol import EasyProtocolPlugin
 
 
 def async_result(f):
@@ -169,12 +170,6 @@ class CoreClient(object):
                     self,
                     prefix=message[0],
                     command=message[1],
-                    args=message[2]
-                )
-                gevent.spawn(
-                    getattr(signals.m, 'on_' + message[1]).send,
-                    self,
-                    prefix=message[0],
                     args=message[2]
                 )
 
@@ -374,3 +369,10 @@ class ProtocolClient(CoreClient):
 
     def whowas(self, nick, max='', server=''):
         self.sendraw('WHOWAS {} {} {}'.format(nick, max, server))
+
+
+class EasyClient(ProtocolClient):
+    def __init__(self, identity, host, port=6667, ssl=False, plugins=None):
+        plugins = plugins or []
+        plugins.extend([EasyProtocolPlugin])
+        ProtocolClient.__init__(self, identity, host, port, ssl, plugins)

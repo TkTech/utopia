@@ -56,4 +56,3 @@ class EasyProtocolPlugin(ProtocolPlugin):
         getattr(signals.m, 'on_' + command).send(
             client, prefix=prefix, target=target, args=args
         )
-
