@@ -204,6 +204,19 @@ class CoreClient(object):
 
         self._message_queue.put(u' '.join(message))
 
+    def sendraw(self, message, appendrn=True):
+        """
+        Sends a raw message to the server.
+
+        :param message: The message to send.
+        :param appendrn: If True (default) adds \r\n if missing.
+        """
+
+        if not message.endswith('\r\n') and appendrn:
+            message = message + '\r\n'
+
+        self._message_queue.put(message)
+
     def terminate(self, block=True):
         """
         Terminate IO workers immediately.
