@@ -54,7 +54,7 @@ class Identity(object):
         return self._password
 
 
-class IRCClient(object):
+class CoreClient(object):
     def __init__(self, identity, host, port=6667, ssl=False, plugins=None):
         assert(isinstance(ssl, bool))
         assert(isinstance(port, (int, long)))

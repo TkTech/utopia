@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from utopia.client import IRCClient, Identity
+from utopia.client import CoreClient, Identity
 
 
 def test_connect_success():
     identity = Identity('testbot', password='password')
-    client = IRCClient(identity, 'localhost')
+    client = CoreClient(identity, 'localhost')
     result = client.connect()
     assert(result.get() is True)
