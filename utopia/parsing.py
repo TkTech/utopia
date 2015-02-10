@@ -204,7 +204,7 @@ def make_ctcp_string(messages):
 
     for tag, data in messages:
         if data is not None:
-            s = '{} {}'.format(tag.upper(), data)
+            s = '{0} {1}'.format(tag.upper(), data)
         else:
             s = tag.upper()
         msg_buf.append(''.join([X_DELIM, ctcp_quote(s), X_DELIM]))
