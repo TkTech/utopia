@@ -36,6 +36,32 @@ def unpack_message(line):
     return prefix, command.upper(), args
 
 
+def _005_prefix(v):
+    v = list(v.replace('(', '').replace(')', ''))
+    hlv = int(len(v) / 2)
+    return dict([v[i::hlv] for i in range(hlv)])
+
+_005_DATA = [
+    (('PREFIX',), _005_prefix),
+    (('CHANTYPES', 'STATUSMSG'), tuple),
+    (
+        ('CHANMODES', 'CMDS', 'STD'),
+        lambda v: tuple(map(get_type, v.split(',')))
+    ),
+    (
+        ('MODES', 'MAXCHANNELS', 'NICKLEN', 'MAXBANS',
+         'TOPICLEN', 'KICKLEN', 'CHANNELLEN', 'CHIDLEN',
+         'SILENCE', 'AWAYLEN', 'WATCH'),
+        int
+    ),
+    (
+        ('CHANLIMIT', 'MAXLIST', 'IDCHAN', 'TARGMAX'),
+        lambda v: dict(map(lambda x: (x[0], get_type(x[1])),
+                           [d.split(':') for d in v.split(',')]))
+    )
+]
+
+
 def unpack_005(args):
     """
     Unpacks a complete, RFC compilant 005 (ISUPPORT) IRC message,
@@ -52,22 +78,16 @@ def unpack_005(args):
         if '=' in d:
             k, v = d.split('=', 1)
             k = k.upper()
-            if k == 'PREFIX':
-                v = list(v.replace('(', '').replace(')', ''))
-                hlv = int(len(v) / 2) #  python 3: 4/2 = 2.0
-                v = dict([v[i::hlv] for i in range(hlv)])
-            elif k in ('CHANTYPES', 'STATUSMSG'):
-                v = tuple(v)
-            elif k in ('CHANMODES', 'CMDS', 'STD'):
-                v = tuple(map(get_type, v.split(',')))
-            elif k in ('MODES', 'MAXCHANNELS', 'NICKLEN', 'MAXBANS',
-                       'TOPICLEN', 'KICKLEN', 'CHANNELLEN', 'CHIDLEN',
-                       'SILENCE', 'AWAYLEN', 'WATCH'):
-                v = int(v)
-            elif k in ('CHANLIMIT', 'MAXLIST', 'IDCHAN', 'TARGMAX'):
-                v = dict(map(lambda x: (x[0], get_type(x[1])),
-                             [d.split(':') for d in v.split(',')]))
-            parsed[k] = v
+
+            # identity function
+            fun = lambda v: v
+
+            for keys, f in _005_DATA:
+                if k in keys:
+                    fun = f
+                    break
+
+            parsed[k] = fun(v)
         else:
             rest.append(d)
     return rest, parsed
