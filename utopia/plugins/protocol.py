@@ -4,6 +4,10 @@ from utopia import signals
 
 
 class ProtocolPlugin(object):
+    _TARGET_COMMANDS = (
+        'NOITCE', 'PRIVMSG', 'KICK', 'BAN', 'MODE', 'JOIN', 'PART'
+    )
+
     def __init__(self):
         """
         A plugin, which handles firing of protocol events. E.g.
@@ -23,10 +27,8 @@ class ProtocolPlugin(object):
 
     def on_raw(self, client, prefix, command, args):
         target = None
-        if command in ('NOITCE', 'PRIVMSG', 'KICK',
-                       'BAN', 'MODE', 'JOIN', 'PART'):
-            target = args[0]
-            args = args[1:]
+        if command in ProtocolPlugin._TARGET_COMMANDS:
+            target, args = args[0], args[1:]
 
         getattr(signals.m, 'on_' + command).send(
             client, prefix=prefix, target=target, args=args
