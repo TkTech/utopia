@@ -4,6 +4,14 @@ from utopia import signals
 
 
 class ProtocolPlugin(object):
+    def __init__(self):
+        """
+        A plugin, which handles firing of protocol events. E.g.
+        if the client receives a `JOIN` command, this plugin will
+        fire a `on_JOIN` event.
+        """
+        pass
+
     def bind(self, client):
         signals.on_raw_message.connect(self.on_raw, sender=client)
 
@@ -17,6 +25,17 @@ class ProtocolPlugin(object):
 
 class EasyProtocolPlugin(ProtocolPlugin):
     def __init__(self, pubmsg=True):
+        """
+        A plugin to improve protocol events and make them easier to use.
+        This plugin adds CTCP events and adds a target keyword argument
+        to each event, containing the target the message was sent to.
+
+        :param pubmsg: If True there will be different events for NOTICE
+                       and PRIVMSG commands, depending if the command was
+                       sent to a channel or directly to the user.
+                       PRIVMSG/PRIVNOTICE indicate it was sent to the user,
+                       PUBMSG/PUBNOTICE indicate it was sent to a channel.
+        """
         ProtocolPlugin.__init__(self)
 
         self.pubmsg = pubmsg
