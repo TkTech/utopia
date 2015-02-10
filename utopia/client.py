@@ -12,6 +12,7 @@ import gevent.socket
 
 import utopia.parsing
 from utopia import signals
+from utopia.plugins.handshake import HandshakePlugin
 from utopia.plugins.protocol import EasyProtocolPlugin
 
 
@@ -375,5 +376,5 @@ class EasyClient(ProtocolClient):
     def __init__(self, identity, host, port=6667, ssl=False, plugins=None,
                  pubmsg=True):
         plugins = plugins or []
-        plugins.extend([EasyProtocolPlugin(pubmsg=pubmsg)])
+        plugins.extend([HandshakePlugin, EasyProtocolPlugin(pubmsg=pubmsg)])
         ProtocolClient.__init__(self, identity, host, port, ssl, plugins)
