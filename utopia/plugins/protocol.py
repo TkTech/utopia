@@ -5,7 +5,7 @@ from utopia import signals
 
 class ProtocolPlugin(object):
     _TARGET_COMMANDS = (
-        'NOITCE', 'PRIVMSG', 'KICK', 'BAN', 'MODE', 'JOIN', 'PART'
+        'NOTICE', 'PRIVMSG', 'KICK', 'BAN', 'MODE', 'JOIN', 'PART'
     )
 
     def __init__(self):
