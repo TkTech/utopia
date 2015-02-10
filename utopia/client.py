@@ -232,8 +232,8 @@ class ProtocolClient(CoreClient):
     def action(self, target, action):
         self.ctcp(target, (('ACTION', action),))
 
-    def admin(self, server=''):
-        self.sendraw('ADMIN {0}'.format(server))
+    def admin(self, server=None):
+        self.sendraw('ADMIN {0}'.format(server or ''))
 
     def ctcp(self, target, messages):
         '''sends a ctcp request to target.
@@ -250,8 +250,8 @@ class ProtocolClient(CoreClient):
     def globops(self, text):
         self.sendraw('GLOBOPS :{0}'.format(text))
 
-    def info(self, server=''):
-        self.sendraw('INFO {0}'.format(server))
+    def info(self, server=None):
+        self.sendraw('INFO {0}'.format(server or ''))
 
     def invite(self, nick, channel):
         self.sendraw('INVITE {0} {1}'.format(nick, channel))
@@ -259,11 +259,11 @@ class ProtocolClient(CoreClient):
     def ison(self, nicks):
         self.sendraw('ISON {0}'.format(' '.join(nicks)))
 
-    def join_channel(self, channel, key=''):
-        self.sendraw('JOIN {0} {1}'.format(channel, key))
+    def join_channel(self, channel, key=None):
+        self.sendraw('JOIN {0} {1}'.format(channel, key or ''))
 
-    def kick(self, channel, nick, comment=''):
-        self.sendraw('KICK {0} {1} :{2}'.format(channel, nick, comment))
+    def kick(self, channel, nick, comment=None):
+        self.sendraw('KICK {0} {1} :{2}'.format(channel, nick, comment or ''))
 
     def links(self, server_mask, remote_server=''):
         cmd = 'LINKS'
@@ -272,24 +272,24 @@ class ProtocolClient(CoreClient):
         cmd += ' ' + server_mask
         self.sendraw(cmd)
 
-    def list(self, channels=None, server=''):
+    def list(self, channels=None, server=None):
         cmd = 'LIST'
         if channels is not None:
             cmd = 'LIST {0}'.format(','.join(channels))
-        cmd += ' ' + server
+        cmd += ' ' + (server or '')
         self.sendraw(cmd)
 
-    def lusers(self, server=''):
-        self.sendraw('LUSERS {0}'.format(server))
+    def lusers(self, server=None):
+        self.sendraw('LUSERS {0}'.format(server or ''))
 
-    def mode(self, channel, mode, user=''):
-        self.sendraw('MODE {0} {1} {2}'.format(channel, mode, user))
+    def mode(self, channel, mode, user=None):
+        self.sendraw('MODE {0} {1} {2}'.format(channel, mode, user or ''))
 
-    def motd(self, server=''):
-        self.sendraw('MOTD {0}'.format(server))
+    def motd(self, server=None):
+        self.sendraw('MOTD {0}'.format(server or ''))
 
-    def names(self, channel=''):
-        self.sendraw('NAMES {0}'.format(channel))
+    def names(self, channel=None):
+        self.sendraw('NAMES {0}'.format(channel or ''))
 
     def nick(self, newnick):
         self.sendraw('NICK {0}'.format(newnick))
@@ -303,17 +303,17 @@ class ProtocolClient(CoreClient):
     def oper(self, nick, password):
         self.sendraw('OPER {0} {1}'.format(nick, password))
 
-    def part(self, channel, message=''):
-        self.sendraw('PART {0} {1}'.format(channel, message))
+    def part(self, channel, message=None):
+        self.sendraw('PART {0} {1}'.format(channel, message or ''))
 
     def pass_(self, password):
         self.sendraw('PASS {0}'.format(password))
 
-    def ping(self, target, target2=''):
-        self.sendraw('PING {0} {1}'.format(target, target2))
+    def ping(self, target, target2=None):
+        self.sendraw('PING {0} {1}'.format(target, target2 or ''))
 
-    def pong(self, target, target2=''):
-        self.sendraw('PONG {0} {1}'.format(target, target2))
+    def pong(self, target, target2=None):
+        self.sendraw('PONG {0} {1}'.format(target, target2 or ''))
 
     def privmsg(self, target, text):
         for part in utopia.parsing.ssplit(text, 420):
@@ -326,17 +326,17 @@ class ProtocolClient(CoreClient):
             self.sendraw('PRIVMSG {0} :{1}'.format(
                 ','.join(targets), ''.join(filter(None, part))))
 
-    def quit(self, message=''):
-        self.sendraw('QUIT :{0}'.format(message))
+    def quit(self, message=None):
+        self.sendraw('QUIT :{0}'.format(message or ''))
 
-    def squit(self, server, comment=''):
-        self.sendraw('SQUIT {0} :{1}'.format(server, comment))
+    def squit(self, server, comment=None):
+        self.sendraw('SQUIT {0} :{1}'.format(server, comment or ''))
 
-    def stats(self, statstype, server=''):
-        self.sendraw('STATS {0} {1}'.format(statstype, server))
+    def stats(self, statstype, server=None):
+        self.sendraw('STATS {0} {1}'.format(statstype, server or ''))
 
-    def time(self, server=''):
-        self.sendraw('TIME {0}'.format(server))
+    def time(self, server=None):
+        self.sendraw('TIME {0}'.format(server or ''))
 
     def topic(self, channel, new_topic=None):
         if new_topic is None:
@@ -344,8 +344,8 @@ class ProtocolClient(CoreClient):
         else:
             self.sendraw('TOPIC {0} :{1}'.format(channel, new_topic))
 
-    def trace(self, target=''):
-        self.sendraw('TRACE {0}'.format(target))
+    def trace(self, target=None):
+        self.sendraw('TRACE {0}'.format(target or ''))
 
     def user(self, username, realname):
         self.sendraw('USER {0} 0 * :{1}'.format(username, realname))
@@ -353,23 +353,23 @@ class ProtocolClient(CoreClient):
     def userhost(self, nick):
         self.sendraw('USERHOST {0}'.format(nick))
 
-    def users(self, server=''):
-        self.sendraw('USERS {0}'.format(server))
+    def users(self, server=None):
+        self.sendraw('USERS {0}'.format(server or ''))
 
-    def version(self, server=''):
-        self.sendraw('VERSION {0}'.format(server))
+    def version(self, server=None):
+        self.sendraw('VERSION {0}'.format(server or ''))
 
     def wallops(self, text):
         self.sendraw('WALLOPS :{0}'.format(text))
 
-    def who(self, target, op=''):
-        self.sendraw('WHO {0} {1}'.format(target, op))
+    def who(self, target, op=None):
+        self.sendraw('WHO {0} {1}'.format(target, op or ''))
 
     def whois(self, target):
         self.sendraw('WHOIS {0}'.format(target))
 
-    def whowas(self, nick, max='', server=''):
-        self.sendraw('WHOWAS {0} {1} {2}'.format(nick, max, server))
+    def whowas(self, nick, max=None, server=None):
+        self.sendraw('WHOWAS {0} {1} {2}'.format(nick, max or '', server or ''))
 
 
 class EasyClient(ProtocolClient):
