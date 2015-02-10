@@ -115,12 +115,18 @@ M_DEQUOTE_TABLE = dict([(v, k) for k, v in M_QUOTE_TABLE.items()])
 
 
 def low_quote(s):
+    """
+    Performs low level quoting on a string (CTCPSPEC).
+    """
     for c in M_QUOTE_TABLE:
         s = s.replace(c, M_QUOTE_TABLE[c])
     return s
 
 
 def low_dequote(s):
+    """
+    Performs low level dequoting on a string (CTCPSPEC).
+    """
     s = iter(s)
     d_s = ''
     for c in s:
@@ -144,12 +150,18 @@ X_DEQUOTE_TABLE = dict([(v, k) for k, v in X_QUOTE_TABLE.items()])
 
 
 def ctcp_quote(s):
+    """
+    Performs ctcp quoting on a string (CTCPSPEC).
+    """
     for c in (X_QUOTE, X_DELIM):
         s = s.replace(c, X_QUOTE_TABLE[c])
     return s
 
 
 def ctcp_dequote(s):
+    """
+    Performs ctcp dequoting on a string (CTCPSPEC).
+    """
     s = iter(s)
     d_s = ''
     for c in s:
@@ -200,10 +212,14 @@ def make_ctcp_string(messages):
     return ''.join(msg_buf)
 
 
-# other helpers
 def is_channel(target, channel_prefixes='!&#+'):
-    'returns True if the target is a channel'
-    return target[0] in channel_prefixes
+    """
+    Returns True if the target is a valid IRC channel.
+
+    :param target: String to check.
+    :param channel_prefixes: A list or string of valid chantypes.
+    """
+    return len(target) > 1 and target[0] in channel_prefixes
 
 
 def unpack_prefix(prefix):
@@ -222,29 +238,14 @@ def unpack_prefix(prefix):
     return prefix, user, host
 
 
-def nick_from_nickmask(prefix):
-    'extracts the nick of a nickmask'
-    return prefix.split('!')[0]
-
-
-def userhost_from_nickmask(prefix):
-    'extracts the userhost of a nickmask'
-    return prefix.split('!')[1]
-
-
-def user_from_nickmask(prefix):
-    'extracts the user of a nickmask'
-    return userhost_from_nickmask(prefix).split('@')[0]
-
-
-def host_from_nickmask(prefix):
-    'extracts the host of a nickmask'
-    return userhost_from_nickmask(prefix).split('@')[1]
-
-
-# other helpers
 def ssplit(str_, length=420):
-    '''splits a string into multiple lines with a given length'''
+    """
+    Splits a into multiple lines with a maximum length, without
+    breaking words.
+
+    :param str_: The string to split.
+    :param length: Maximum line length.
+    """
     buf = list()
     for line in str_.split('\n'):
         buf.extend(textwrap.wrap(line.rstrip('\r'), length))
