@@ -10,11 +10,6 @@ class HandshakePlugin(object):
             sender=client
         )
 
-        signals.m.on_001.connect(
-            cls.have_welcome,
-            sender=client
-        )
-
         return cls
 
     @staticmethod
@@ -31,9 +26,3 @@ class HandshakePlugin(object):
             client.identity.real
         )
 
-    @classmethod
-    def have_welcome(cls, client, prefix, args):
-        # We're only interested in the RPL_WELCOME event once,
-        # after registration.
-        signals.m.on_001.disconnect(cls.have_welcome, sender=client)
-        signals.on_registered.send(sender=client)

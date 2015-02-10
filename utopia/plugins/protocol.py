@@ -8,27 +8,41 @@ class ProtocolPlugin(object):
         """
         A plugin, which handles firing of protocol events. E.g.
         if the client receives a `JOIN` command, this plugin will
-        fire a `on_JOIN` event.
+        fire a `on_JOIN` event. Every on-event also has a new target
+        parameter containing the user/channel the command was sent to,
+        for global events this parameter is None.
         """
         pass
 
     def bind(self, client):
         signals.on_raw_message.connect(self.on_raw, sender=client)
+        signals.m.on_001.connect(self.have_welcome, sender=client)
 
         return self
 
     def on_raw(self, client, prefix, command, args):
+        target = None
+        if command in ('NOITCE', 'PRIVMSG', 'KICK',
+                       'BAN', 'MODE', 'JOIN', 'PART'):
+            target = args[0]
+            args = args[1:]
+
         getattr(signals.m, 'on_' + command).send(
-            client, prefix=prefix, args=args
+            client, prefix=prefix, target=target, args=args
         )
+
+    def have_welcome(self, client, prefix, target, args):
+        # We're only interested in the RPL_WELCOME event once,
+        # after registration.
+        signals.m.on_001.disconnect(self.have_welcome, sender=client)
+        signals.on_registered.send(sender=client)
 
 
 class EasyProtocolPlugin(ProtocolPlugin):
     def __init__(self, pubmsg=True):
         """
-        A plugin to improve protocol events and make them easier to use.
-        This plugin adds CTCP events and adds a target keyword argument
-        to each event, containing the target the message was sent to.
+        A plugin to improve protocol events and make them easier to use
+        (e.g. CTCP events).
 
         :param pubmsg: If True there will be different events for NOTICE
                        and PRIVMSG commands, depending if the command was
@@ -48,14 +62,12 @@ class EasyProtocolPlugin(ProtocolPlugin):
 
         return self
 
-    def on_005(self, client, prefix, args):
+    def on_005(self, client, prefix, target, args):
         r, p = utopia.parsing.unpack_005(args)
         self._isupport[0].update(r)
         self._isupport[1].update(p)
 
     def on_raw(self, client, prefix, command, args):
-        target = None
-
         if command in ('NOTICE', 'PRIVMSG'):
             target = args[0]
 
@@ -89,10 +101,6 @@ class EasyProtocolPlugin(ProtocolPlugin):
                 command = command.lstrip('PRIV')
                 pf = 'PUB' if is_chan else 'PRIV'
                 command = pf + command
-        elif command in ('KICK', 'BAN', 'MODE', 'JOIN', 'PART'):
-            target = args[0]
-            args = args[1:]
 
-        getattr(signals.m, 'on_' + command).send(
-            client, prefix=prefix, target=target, args=args
-        )
+        ProtocolPlugin.on_raw(self, client, prefix, command, args)
+
