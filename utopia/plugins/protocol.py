@@ -16,7 +16,7 @@ class ProtocolPlugin(object):
 
     def bind(self, client):
         signals.on_raw_message.connect(self.on_raw, sender=client)
-        signals.m.on_001.connect(self.have_welcome, sender=client)
+        signals.m.on_001.connect(self.on_001, sender=client)
 
         return self
 
@@ -31,10 +31,10 @@ class ProtocolPlugin(object):
             client, prefix=prefix, target=target, args=args
         )
 
-    def have_welcome(self, client, prefix, target, args):
+    def on_001(self, client, prefix, target, args):
         # We're only interested in the RPL_WELCOME event once,
         # after registration.
-        signals.m.on_001.disconnect(self.have_welcome, sender=client)
+        signals.m.on_001.disconnect(self.on_001, sender=client)
         signals.on_registered.send(sender=client)
 
         # Now set the nick the server gave us
