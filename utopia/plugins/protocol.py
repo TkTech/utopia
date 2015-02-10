@@ -37,6 +37,9 @@ class ProtocolPlugin(object):
         signals.m.on_001.disconnect(self.have_welcome, sender=client)
         signals.on_registered.send(sender=client)
 
+        # Now set the nick the server gave us
+        client.identity._nick = target
+
 
 class EasyProtocolPlugin(ProtocolPlugin):
     def __init__(self, pubmsg=True):
