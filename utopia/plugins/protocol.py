@@ -115,3 +115,39 @@ class EasyProtocolPlugin(ProtocolPlugin):
 
         ProtocolPlugin.on_raw(self, client, prefix, command, args)
 
+
+class ISupportPlugin(object):
+    def __init__(self, callback=None):
+        """
+        A plugin to automatically unpack IRC isupport messages.
+
+        :param callback: function which gets called after every 005
+                         (isupport) message with the unpacked information
+                         (see `utopia.parsing.unpack_005` for datatype).
+        """
+        self._callback = callback
+        self._isupport = (set(), dict())
+
+    @property
+    def isupport(self):
+        """
+        Unpacked isupport.
+        """
+        return self._isupport
+
+    def __getitem__(self, index):
+        return self._isupport[index]
+
+    def bind(self, client):
+        signals.m.on_005.connect(self.on_005, sender=client)
+
+        return self
+
+    def on_005(self, client, prefix, target, args):
+        r, p = utopia.parsing.unpack_005(args)
+        self._isupport[0].update(r)
+        self._isupport[1].update(p)
+
+        if self._callback is not None:
+            self._callback(self._isupport)
+
