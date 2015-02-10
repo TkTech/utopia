@@ -63,6 +63,10 @@ class EasyProtocolPlugin(ProtocolPlugin):
 
         self._isupport = (set(), dict())
 
+    @property
+    def isupport(self):
+        return self._isupport
+
     def bind(self, client):
         ProtocolPlugin.bind(self, client)
         signals.m.on_005.connect(self.on_005, sender=client)
