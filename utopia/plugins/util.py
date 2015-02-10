@@ -14,10 +14,10 @@ class RecPlugin(object):
         a clients lifetime.
 
         :param terminate_on: An iterable of commands that will cause the
-                             client to terminate when recieved.
+                             client to terminate when received.
         """
         self.terminate_on = terminate_on or tuple()
-        self.recieved = []
+        self.received = []
 
     def bind(self, client):
         signals.on_raw_message.connect(
@@ -27,13 +27,13 @@ class RecPlugin(object):
         return self
 
     def have_raw_message(self, client, prefix, command, args):
-        self.recieved.append((prefix, command, args))
+        self.received.append((prefix, command, args))
 
         if command in self.terminate_on:
             client.terminate()
 
-    def did_recieve(self, command):
-        for prefix, command_recv, args in self.recieved:
+    def did_receive(self, command):
+        for prefix, command_recv, args in self.received:
             if command_recv == command:
                 return True
         return False

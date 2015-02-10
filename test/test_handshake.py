@@ -22,4 +22,4 @@ def test_handshake_success():
     assert(result.get() is True)
 
     client._io_workers.join(timeout=5)
-    assert(rec_plugin.did_recieve('001'))
+    assert(rec_plugin.did_receive('001'))

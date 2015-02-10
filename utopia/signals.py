@@ -30,7 +30,7 @@ Triggered when the client disconnects from a server.
 """)
 
 on_raw_message = signal('on-raw-message', doc="""
-Triggered whenever a message is recieved from the server.
+Triggered whenever a message is received from the server.
 
 :param client: The client recieving this message.
 :param prefix: The IRC message prefix.
@@ -40,7 +40,7 @@ Triggered whenever a message is recieved from the server.
 
 on_registered = signal('on-registered', doc="""
 Triggered when registration with the server is completed.
-This typically means the client has recieved RPL_WELCOME.
+This typically means the client has received RPL_WELCOME.
 
 :param client: The client recieving this message.
 """)
