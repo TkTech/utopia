@@ -372,7 +372,8 @@ class ProtocolClient(CoreClient):
 
 
 class EasyClient(ProtocolClient):
-    def __init__(self, identity, host, port=6667, ssl=False, plugins=None):
+    def __init__(self, identity, host, port=6667, ssl=False, plugins=None,
+                 pubmsg=True):
         plugins = plugins or []
-        plugins.extend([EasyProtocolPlugin])
+        plugins.extend([EasyProtocolPlugin(pubmsg=pubmsg)])
         ProtocolClient.__init__(self, identity, host, port, ssl, plugins)
