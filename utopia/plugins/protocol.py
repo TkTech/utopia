@@ -17,6 +17,7 @@ class ProtocolPlugin(object):
     def bind(self, client):
         signals.on_raw_message.connect(self.on_raw, sender=client)
         signals.m.on_001.connect(self.on_001, sender=client)
+        signals.m.on_PING.connect(self.on_ping, sender=client)
 
         return self
 
@@ -39,6 +40,9 @@ class ProtocolPlugin(object):
 
         # Now set the nick the server gave us
         client.identity._nick = target
+
+    def on_ping(self, client, prefix, target, args):
+        client.sendraw('PONG {0}'.format(' '.join(args[:2])))
 
 
 class EasyProtocolPlugin(ProtocolPlugin):
