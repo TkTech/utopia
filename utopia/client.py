@@ -197,9 +197,9 @@ class CoreClient(object):
         if args:
             message.extend(args[:-1])
             message.append(u':' + args[-1])
-        message.append('\r\n')
+        message = u' '.join(message)
 
-        self._message_queue.put(u' '.join(message))
+        self.sendraw(message, True)
 
     def sendraw(self, message, appendrn=True):
         """
