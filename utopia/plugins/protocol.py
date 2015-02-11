@@ -38,7 +38,7 @@ class ProtocolPlugin(object):
         # We're only interested in the RPL_WELCOME event once,
         # after registration.
         signals.m.on_001.disconnect(self.on_001, sender=client)
-        signals.on_registered.send(sender=client)
+        signals.on_registered.send(client)
 
         # Now set the nick the server gave us
         client.identity._nick = target
