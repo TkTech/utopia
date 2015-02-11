@@ -41,7 +41,7 @@ class ProtocolPlugin(object):
         signals.on_registered.send(client)
 
         # Now set the nick the server gave us
-        client.identity._nick = target
+        client.identity._nick = args[0]
 
     def on_ping(self, client, prefix, target, args):
         client.sendraw('PONG {0}'.format(' '.join(args[:2])))
