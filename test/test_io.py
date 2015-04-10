@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 from utopia import signals
 from utopia.client import CoreClient, Identity
+from test.util import unique_identity
 
 
 def test_connect_success():
-    identity = Identity('testbot', password='password')
+    identity = unique_identity()
     client = CoreClient(identity, 'localhost')
     result = client.connect()
     assert(result.get() is True)
 
 
 def test_disconnect_event():
-    identity = Identity('testbot', password='password')
+    identity = unique_identity()
 
     class ConnectPlugin(object):
         def __init__(self):

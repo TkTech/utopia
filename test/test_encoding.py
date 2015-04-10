@@ -4,6 +4,7 @@ from utopia.plugins.handshake import HandshakePlugin
 from utopia.plugins.protocol import ProtocolPlugin
 from utopia.plugins.util import RecPlugin, LogPlugin
 from utopia import signals
+from test.util import unique_identity
 
 
 def test_unicode_privmsg():
@@ -13,7 +14,7 @@ def test_unicode_privmsg():
     TEST_STRING = u'± äöü @ o ↑↑↓↓←→←→BA コナミコマンド'
 
     client1 = ProtocolClient(
-        Identity('testbot2', password='password'), 'localhost', plugins=[
+        unique_identity(), 'localhost', plugins=[
             HandshakePlugin,
             LogPlugin(),
             ProtocolPlugin()
@@ -21,7 +22,7 @@ def test_unicode_privmsg():
     )
 
     client2 = ProtocolClient(
-        Identity('testbot3', password='password'), 'localhost', plugins=[
+        unique_identity(), 'localhost', plugins=[
             HandshakePlugin,
             LogPlugin(),
             ProtocolPlugin()
