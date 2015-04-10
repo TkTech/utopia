@@ -57,5 +57,11 @@ Icon
 *.swp
 *.swo
 
+# PyCharm
+.idea
+
+# Kdevelop
+*.kdev*
+
 # Testing cruft
 test/ngircd.pid
