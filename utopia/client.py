@@ -71,10 +71,10 @@ class CoreClient(object):
         # Outgoing message queue. Used to throttle network
         # writes.
         self._message_queue = gevent.queue.Queue()
-        # Message write delay in seconds. 1 second should be more
-        # than reasonable as a default. Some networks will send
-        # new limits upon registration.
-        self._message_delay = 1
+        # Message write delay in seconds.
+        # Set to 0 seconds since it is an undocumented feature for now.
+        # Some networks will send new limits upon registration.
+        self._message_delay = 0
 
         # Used to cleanly shutdown the IO workers on termination.
         self._io_workers = gevent.pool.Group()
@@ -197,6 +197,9 @@ class CoreClient(object):
             #       It's possible for malicious servers to accept writes
             #       very, very slowly. We should probably timeout here.
             self.socket.sendall(next_message)
+
+            if self._message_delay > 0:
+                gevent.sleep(self._message_delay)
 
     def send(self, command, *args):
         """
