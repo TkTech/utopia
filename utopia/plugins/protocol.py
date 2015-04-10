@@ -96,11 +96,11 @@ class EasyProtocolPlugin(ProtocolPlugin):
 
                         # generic on_CTCP or on_CTCPREPLY event
                         getattr(signals.m, 'on_' + type_).send(
-                            client, prefix=prefix, target=target, args=data
+                            client, prefix=prefix, target=target, tag=tag, args=data
                         )
                         # specific CTCP or CTCPREPLY event, e.g. on_CTCP_VERSION
                         getattr(signals.m, 'on_{0}_{1}'.format(type_, tag)).send(
-                            client, prefix=prefix, target=target, args=data
+                            client, prefix=prefix, target=target, tag=tag, args=data
                         )
 
                 if not normal_msgs:
