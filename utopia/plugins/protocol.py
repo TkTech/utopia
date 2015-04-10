@@ -92,9 +92,15 @@ class EasyProtocolPlugin(ProtocolPlugin):
                     is_priv = command == 'PRIVMSG'
 
                     for tag, data in extended_msgs:
-                        type_ = 'CTCP_' if is_priv else 'CTCPREPLY_'
-                        getattr(signals.m, 'on_' + type_ + tag).send(
-                            prefix=prefix, target=target, args=data
+                        type_ = 'CTCP' if is_priv else 'CTCPREPLY'
+
+                        # generic on_CTCP or on_CTCPREPLY event
+                        getattr(signals.m, 'on_' + type_).send(
+                            client, prefix=prefix, target=target, args=data
+                        )
+                        # specific CTCP or CTCPREPLY event, e.g. on_CTCP_VERSION
+                        getattr(signals.m, 'on_{0}_{1}'.format(type_, tag)).send(
+                            client, prefix=prefix, target=target, args=data
                         )
 
                 if not normal_msgs:
