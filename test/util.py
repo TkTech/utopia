@@ -7,9 +7,14 @@ from utopia import signals
 from gevent.event import Event
 import itertools
 
-_next_unique = itertools.count().next
+_next_unique_identity = itertools.count().next
 def unique_identity(password='password'):
-    return Identity('testbot{0}'.format(_next_unique()), password=password)
+    return Identity('testbot{0}'.format(_next_unique_identity()), password=password)
+
+
+_next_unique_channel = itertools.count().next
+def unique_channel():
+    return '#unique{0}'.format(_next_unique_channel())
 
 
 class TestVarContainer(object):
@@ -47,7 +52,10 @@ def _default_plugins():
     return [HandshakePlugin, LogPlugin(), ProtocolPlugin()]
 
 
-def get_two_joined_clients(channel='#test', protocol_factory=_default_plugins):
+def get_two_joined_clients(channel=None, protocol_factory=_default_plugins):
+    if channel is None:
+        channel = unique_channel()
+
     client1 = ProtocolClient(
         unique_identity(), 'localhost', plugins=protocol_factory()
     )

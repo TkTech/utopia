@@ -4,10 +4,6 @@ from utopia import signals
 
 
 class ProtocolPlugin(object):
-    _TARGET_COMMANDS = (
-        'NOTICE', 'PRIVMSG', 'KICK', 'BAN', 'MODE', 'JOIN', 'PART'
-    )
-
     def __init__(self):
         """
         A plugin, which handles firing of protocol events. E.g.
@@ -16,7 +12,9 @@ class ProtocolPlugin(object):
         parameter containing the user/channel the command was sent to,
         for global events this parameter is None.
         """
-        pass
+        self._target_commands = (
+            'NOTICE', 'PRIVMSG', 'KICK', 'BAN', 'MODE', 'JOIN', 'PART'
+        )
 
     def bind(self, client):
         signals.on_raw_message.connect(self.on_raw, sender=client)
@@ -27,7 +25,7 @@ class ProtocolPlugin(object):
 
     def on_raw(self, client, prefix, command, args):
         target = None
-        if command in ProtocolPlugin._TARGET_COMMANDS:
+        if command in self._target_commands:
             target, args = args[0], args[1:]
 
         getattr(signals.m, 'on_' + command).send(
@@ -62,6 +60,12 @@ class EasyProtocolPlugin(ProtocolPlugin):
         ProtocolPlugin.__init__(self)
 
         self.pubmsg = pubmsg
+        self._target_commands = (
+            # default values
+            'NOTICE', 'PRIVMSG', 'KICK', 'BAN', 'MODE', 'JOIN', 'PART',
+            # pubmsg values
+            'PRIVNOTICE', 'PUBNOTICE', 'PUBMSG'
+        )
 
         self._isupport = (set(), dict())
 
