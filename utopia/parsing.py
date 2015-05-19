@@ -1,6 +1,10 @@
 import textwrap
+from collections import namedtuple
 
 # TODO proper documentation
+
+
+Prefix = namedtuple('Prefix', ['nick', 'user', 'host'])
 
 
 def unpack_message(line):
@@ -235,7 +239,7 @@ def unpack_prefix(prefix):
     if '!' in prefix:
         prefix, user = prefix.split('!', 1)
 
-    return prefix, user, host
+    return Prefix(prefix, user, host)
 
 
 def ssplit(str_, length=420):

@@ -12,6 +12,9 @@ def test_parse_full_prefix():
     )
 
     assert(prefix == ('TestNick', 'TestUsername', 'test.host'))
+    assert(prefix.nick == 'TestNick')
+    assert(prefix.user == 'TestUsername')
+    assert(prefix.host == 'test.host')
     assert(command == 'JOIN')
     assert(len(args) == 1)
     assert(args[0] == '#test')
@@ -26,6 +29,9 @@ def test_parse_server_prefix():
     )
 
     assert(prefix == ('irc.test.host', None, None))
+    assert(prefix.nick == 'irc.test.host')
+    assert(prefix.user is None)
+    assert(prefix.host is None)
     assert(command == '001')
     assert(len(args) == 2)
     assert(args[0] == 'TestNick')
@@ -57,6 +63,9 @@ def test_parse_005():
     )
 
     assert(prefix == ('rajaniemi.freenode.net', None, None))
+    assert(prefix.nick == 'rajaniemi.freenode.net')
+    assert(prefix.user is None)
+    assert(prefix.host is None)
     assert(command == '005')
     assert(args == [
         'utopiatestbot123', 'CHANTYPES=#', 'EXCEPTS', 'INVEX',
