@@ -13,7 +13,13 @@ class ProtocolPlugin(object):
         for global events this parameter is None.
         """
         self._target_commands = (
-            'NOTICE', 'PRIVMSG', 'KICK', 'BAN', 'MODE', 'JOIN', 'PART'
+            'NOTICE',
+            'PRIVMSG',
+            'KICK',
+            'BAN',
+            'MODE',
+            'JOIN',
+            'PART'
         )
 
     def bind(self, client):
@@ -62,9 +68,17 @@ class EasyProtocolPlugin(ProtocolPlugin):
         self.pubmsg = pubmsg
         self._target_commands = (
             # default values
-            'NOTICE', 'PRIVMSG', 'KICK', 'BAN', 'MODE', 'JOIN', 'PART',
+            'NOTICE',
+            'PRIVMSG',
+            'KICK',
+            'BAN',
+            'MODE',
+            'JOIN',
+            'PART',
             # pubmsg values
-            'PRIVNOTICE', 'PUBNOTICE', 'PUBMSG'
+            'PRIVNOTICE',
+            'PUBNOTICE',
+            'PUBMSG'
         )
 
         self._isupport = (set(), dict())
@@ -100,11 +114,22 @@ class EasyProtocolPlugin(ProtocolPlugin):
 
                         # generic on_CTCP or on_CTCPREPLY event
                         getattr(signals.m, 'on_' + type_).send(
-                            client, prefix=prefix, target=target, tag=tag, args=data
+                            client,
+                            prefix=prefix,
+                            target=target,
+                            tag=tag,
+                            args=data
                         )
-                        # specific CTCP or CTCPREPLY event, e.g. on_CTCP_VERSION
-                        getattr(signals.m, 'on_{0}_{1}'.format(type_, tag)).send(
-                            client, prefix=prefix, target=target, tag=tag, args=data
+
+                        # specific CTCP or CTCPREPLY event,
+                        # e.g. on_CTCP_VERSION
+                        ctcp_method_name = 'on_{0}_{1}'.format(type_, tag)
+                        getattr(signals.m, ctcp_method_name).send(
+                            client,
+                            prefix=prefix,
+                            target=target,
+                            tag=tag,
+                            args=data
                         )
 
                 if not normal_msgs:
@@ -162,4 +187,3 @@ class ISupportPlugin(object):
 
         if self._callback is not None:
             self._callback(self._isupport)
-
