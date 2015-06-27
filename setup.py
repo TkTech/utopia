@@ -22,8 +22,8 @@ setup(
         'blinker'
     ],
     tests_require=[
-        'psutil',
         'sniffer',
         'nose'
-    ]
+    ],
+    test_suite='nose.collector'
 )
