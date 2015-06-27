@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from utopia.client import ProtocolClient, Identity
 from utopia.plugins.handshake import HandshakePlugin
 from utopia.plugins.protocol import EasyProtocolPlugin
 from utopia.plugins.util import LogPlugin
@@ -42,7 +41,10 @@ def test_pubmsg_targets():
         return [HandshakePlugin, LogPlugin(), EasyProtocolPlugin(pubmsg=True)]
 
     channel = unique_channel()
-    client1, client2 = get_two_joined_clients(channel=channel, protocol_factory=_plugins)
+    client1, client2 = get_two_joined_clients(
+        channel=channel,
+        protocol_factory=_plugins
+    )
 
     c = TestVarContainer(
         'pubmsg', 'privmsg', 'pubnotice', 'privnotice'
