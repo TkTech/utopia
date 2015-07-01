@@ -1,9 +1,10 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-from utopia.client import ProtocolClient, Identity
+from utopia import signals
+from utopia.client import ProtocolClient
 from utopia.plugins.handshake import HandshakePlugin
 from utopia.plugins.protocol import ProtocolPlugin
-from utopia.plugins.util import RecPlugin, LogPlugin
-from utopia import signals
+from utopia.plugins.util import LogPlugin
 from test.util import unique_identity
 
 
