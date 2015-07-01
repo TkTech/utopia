@@ -8,11 +8,16 @@ from gevent.event import Event
 import itertools
 
 _next_unique_identity = itertools.count().next
-def unique_identity(password='password'):
-    return Identity('testbot{0}'.format(_next_unique_identity()), password=password)
-
-
 _next_unique_channel = itertools.count().next
+
+
+def unique_identity(password='password'):
+    return Identity(
+        'testbot{0}'.format(_next_unique_identity()),
+        password=password
+    )
+
+
 def unique_channel():
     return '#unique{0}'.format(_next_unique_channel())
 
@@ -23,9 +28,9 @@ class TestVarContainer(object):
         for arg in args:
             self._vars[arg] = Event()
 
-        # adds support for blinker weak references.
-        # as long as we keep a reference of the callback the signal will arrive.
-        # once the container dies, the callbacks will as well
+        # Adds support for blinker weak references.
+        # As long as we keep a reference of the callback the signal will
+        # arrive. Once the container dies, the callbacks will as well
         self._dumpster = set()
 
     def set_callback(self, attr):
@@ -39,7 +44,9 @@ class TestVarContainer(object):
         return all(value for attr, value in self.__dict__.iteritems())
 
     def wait_all(self, timeout=None):
-        return all(event.wait(timeout=timeout) for attr, event in self._vars.items())
+        return all(
+            event.wait(timeout=timeout) for attr, event in self._vars.items()
+        )
 
     def __getattr__(self, item):
         if item not in self._vars:
@@ -86,6 +93,3 @@ def get_two_joined_clients(channel=None, protocol_factory=_default_plugins):
     assert client2._test_joined.wait(timeout=5)
 
     return client1, client2
-
-
-
