@@ -40,6 +40,13 @@ class RecPlugin(object):
 
 class LogPlugin(object):
     def __init__(self, logger=None):
+        """
+        A utility plugin to log all messages as they're recieved by the
+        client.
+
+        :param logger: A logger to send debugging messages to. If None is
+                       specified, the 'LogPlugin' logger will be used instead.
+        """
         self.logger = logger or logging.getLogger('LogPlugin')
 
     def bind(self, client):
