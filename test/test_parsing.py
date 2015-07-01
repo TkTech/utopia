@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from itertools import repeat
+
+from nose.tools import timed
+
 from utopia.parsing import unpack_message
 from utopia.parsing import unpack_005
 
@@ -18,6 +22,24 @@ def test_parse_full_prefix():
     assert(command == 'JOIN')
     assert(len(args) == 1)
     assert(args[0] == '#test')
+
+
+def test_parse_performance():
+    """
+    Ensure unpacking a simple, best case message never takes longer than
+    0.10s.
+
+    Realistically, unpack_message should always take less than 0.01s on
+    even an archaic machine.
+    """
+    @timed(0.10)
+    def _timed_parse():
+        prefix, command, args = unpack_message(
+            ':TestNick!TestUsername@test.host JOIN :#test\r\n'
+        )
+
+    for _ in repeat(None, 1000):
+        _timed_parse()
 
 
 def test_parse_server_prefix():
