@@ -10,8 +10,7 @@ from utopia import signals
 class RecPlugin(object):
     def __init__(self, terminate_on=None):
         """
-        A utility plugin to log messages that occur dugin
-        a clients lifetime.
+        A utility plugin to log messages that occur during a clients lifetime.
 
         :param terminate_on: An iterable of commands that will cause the
                              client to terminate when received.
