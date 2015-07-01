@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from utopia.client import CoreClient
 from utopia.plugins.handshake import HandshakePlugin
-from utopia.plugins.util import RecPlugin, LogPlugin
+from utopia.plugins.util import RecPlugin
 from test.util import unique_identity
 
 
@@ -16,8 +16,7 @@ def test_handshake_success():
 
     client = CoreClient(identity, 'localhost', plugins=[
         HandshakePlugin,
-        rec_plugin,
-        LogPlugin()
+        rec_plugin
     ])
 
     result = client.connect()
