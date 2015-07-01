@@ -51,6 +51,7 @@ def test_parse_no_prefix():
     assert(len(args) == 1)
     assert(args[0] == 'Closing Link: failed to pass the test.')
 
+
 def test_parse_005():
     """
     Ensure we can parse a 005 message and unpack it correctly.
