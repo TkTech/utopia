@@ -1,5 +1,6 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-from utopia.client import CoreClient, Identity
+from utopia.client import CoreClient
 from utopia.plugins.handshake import HandshakePlugin
 from utopia.plugins.util import RecPlugin, LogPlugin
 from test.util import unique_identity
