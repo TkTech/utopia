@@ -67,11 +67,11 @@ def get_two_joined_clients(channel=None, protocol_factory=_default_plugins):
     client1._test_joined = Event()
     client2._test_joined = Event()
 
-    def on_376(client, prefix, target, args):
+    def on_376(client, message):
         client.join_channel(channel)
 
-    def on_join(client, prefix, target, args):
-        if target == channel and client.identity.nick == prefix[0]:
+    def on_join(client, message):
+        if message.target == channel and client.identity.nick == message.prefix[0]:
             client._test_joined.set()
 
     signals.m.on_376.connect(on_376, sender=client1)

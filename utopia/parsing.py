@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import textwrap
 from collections import namedtuple
 
@@ -7,6 +8,30 @@ from collections import namedtuple
 Prefix = namedtuple('Prefix', ['nick', 'user', 'host'])
 
 
+class RFC1459Message(object):
+    def __init__(self, prefix, command, args, _raw=None, **kwargs):
+        self.__dict__['prefix'] = prefix
+        self.__dict__['command'] = command.upper()
+        self.__dict__['args'] = args
+        self.__dict__['_raw'] = _raw
+        self.__dict__.update(kwargs)
+
+    @classmethod
+    def parse(cls, line):
+        return cls(*unpack_message(line), raw=line)
+
+    # TODO: build() method
+
+    def as_dict(self):
+        return self.__dict__.copy()
+
+    def copy(self):
+        return self.__class__(**self.__dict__)
+
+    def __repr__(self):
+        return '({self.prefix}, {self.command}, {self.args})'.format(self=self)
+
+
 def unpack_message(line):
     """
     Unpacks a complete, RFC compliant IRC message, returning the
@@ -14,9 +39,6 @@ def unpack_message(line):
 
     :param line: An RFC compliant IRC message.
     """
-    if not line:
-        return None
-
     prefix = None
     trailing = []
 

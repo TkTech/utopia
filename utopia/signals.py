@@ -32,17 +32,15 @@ Triggered when the client disconnects from a server.
 on_raw_message = signal('on-raw-message', doc="""
 Triggered whenever a message is received from the server.
 
-:param client: The client recieving this message.
-:param prefix: The IRC message prefix.
-:param command: The IRC command received (ex: PING)
-:param args: The command arguments recevied.
+:param client: The client receiving this message.
+:param message: An IRC message object.
 """)
 
 on_registered = signal('on-registered', doc="""
 Triggered when registration with the server is completed.
 This typically means the client has received RPL_WELCOME.
 
-:param client: The client recieving this message.
+:param client: The client receiving this message.
 """)
 
 m = LazySignalProxy()

@@ -49,8 +49,8 @@ def test_pubmsg_targets():
     )
 
     def check_target(expected_target, to_set):
-        def callback(client, prefix, target, args):
-            if expected_target == target:
+        def callback(client, message):
+            if expected_target == message.target:
                 to_set.set()
 
         check_target._weak = getattr(check_target, '_weak', []) + [callback]

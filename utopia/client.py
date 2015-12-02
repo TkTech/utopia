@@ -90,6 +90,10 @@ class CoreClient(object):
         # Setup plugins.
         self._plugins = [p.bind(self) for p in plugins or []]
 
+        # Message class which is used for parsing.
+        # Plugins can change this to alter parsing (e.g. useful for IRCv3).
+        self._message_parser = utopia.parsing.RFC1459Message
+
     @property
     def host(self):
         return self._host
@@ -178,13 +182,11 @@ class CoreClient(object):
             message_buffer += message_chunk
             while '\r\n' in message_buffer:
                 line, message_buffer = message_buffer.split('\r\n', 1)
-                message = utopia.parsing.unpack_message(line)
+                message = self._message_parser.parse(line)
                 gevent.spawn(
                     signals.on_raw_message.send,
                     self,
-                    prefix=message[0],
-                    command=message[1],
-                    args=message[2]
+                    message=message
                 )
 
     def _io_write(self):

@@ -23,26 +23,29 @@ class ProtocolPlugin(object):
 
         return self
 
-    def on_raw(self, client, prefix, command, args):
-        target = None
-        if command in self._target_commands:
-            target, args = args[0], args[1:]
+    def on_raw(self, client, message):
+        new_message = message.copy()
 
-        getattr(signals.m, 'on_' + command).send(
-            client, prefix=prefix, target=target, args=args
+        new_message.target = None
+        if message.command in self._target_commands:
+            new_message.target, new_message.args = \
+                message.args[0], message.args[1:]
+
+        getattr(signals.m, 'on_' + message.command).send(
+            client, message=new_message
         )
 
-    def on_001(self, client, prefix, target, args):
+    def on_001(self, client, message):
         # We're only interested in the RPL_WELCOME event once,
         # after registration.
         signals.m.on_001.disconnect(self.on_001, sender=client)
         signals.on_registered.send(client)
 
         # Now set the nick the server gave us
-        client.identity._nick = args[0]
+        client.identity._nick = message.args[0]
 
-    def on_ping(self, client, prefix, target, args):
-        client.sendraw('PONG {0}'.format(' '.join(args[:2])))
+    def on_ping(self, client, message):
+        client.sendraw('PONG {0}'.format(' '.join(message.args[:2])))
 
 
 class EasyProtocolPlugin(ProtocolPlugin):
@@ -79,38 +82,47 @@ class EasyProtocolPlugin(ProtocolPlugin):
 
         return self
 
-    def on_005(self, client, prefix, target, args):
-        r, p = utopia.parsing.unpack_005(args)
+    def on_005(self, client, message):
+        r, p = utopia.parsing.unpack_005(message.args)
         self._isupport[0].update(r)
         self._isupport[1].update(p)
 
-    def on_raw(self, client, prefix, command, args):
-        if command in ('NOTICE', 'PRIVMSG'):
-            target = args[0]
+    def on_raw(self, client, message):
+        message = message.copy()
 
-            if utopia.parsing.X_DELIM in args[1]:
+        if message.command in ('NOTICE', 'PRIVMSG'):
+            target = message.args[0]
+
+            if utopia.parsing.X_DELIM in message.args[1]:
                 normal_msgs, extended_msgs = \
-                    utopia.parsing.extract_ctcp(args[1])
+                    utopia.parsing.extract_ctcp(message.args[1])
 
                 if extended_msgs:
-                    is_priv = command == 'PRIVMSG'
+                    is_priv = message.command == 'PRIVMSG'
 
                     for tag, data in extended_msgs:
                         type_ = 'CTCP' if is_priv else 'CTCPREPLY'
 
                         # generic on_CTCP or on_CTCPREPLY event
+                        generic = message.copy()
+                        generic.tag = tag
+                        generic.args = data
                         getattr(signals.m, 'on_' + type_).send(
-                            client, prefix=prefix, target=target, tag=tag, args=data
+                            client, message=generic
                         )
+
                         # specific CTCP or CTCPREPLY event, e.g. on_CTCP_VERSION
+                        specific = message.copy()
+                        specific.tag = tag
+                        specific.args = data
                         getattr(signals.m, 'on_{0}_{1}'.format(type_, tag)).send(
-                            client, prefix=prefix, target=target, tag=tag, args=data
+                            client, message=specific
                         )
 
                 if not normal_msgs:
                     return
 
-                args[1] = ' '.join(normal_msgs)
+                message.args[1] = ' '.join(normal_msgs)
 
             if self.pubmsg:
                 is_chan = utopia.parsing.is_channel(
@@ -121,11 +133,11 @@ class EasyProtocolPlugin(ProtocolPlugin):
                 # PUBNOTICE -> channel notice
                 # PRIVMSG -> user message
                 # PUBMSG -> channel message
-                command = command.lstrip('PRIV')
+                command = message.command.lstrip('PRIV')
                 pf = 'PUB' if is_chan else 'PRIV'
-                command = pf + command
+                message.command = pf + command
 
-        ProtocolPlugin.on_raw(self, client, prefix, command, args)
+        ProtocolPlugin.on_raw(self, client, message)
 
 
 class ISupportPlugin(object):
@@ -155,8 +167,8 @@ class ISupportPlugin(object):
 
         return self
 
-    def on_005(self, client, prefix, target, args):
-        r, p = utopia.parsing.unpack_005(args)
+    def on_005(self, client, message):
+        r, p = utopia.parsing.unpack_005(message.args)
         self._isupport[0].update(r)
         self._isupport[1].update(p)
 

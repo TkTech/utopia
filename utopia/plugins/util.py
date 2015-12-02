@@ -26,10 +26,10 @@ class RecPlugin(object):
         )
         return self
 
-    def have_raw_message(self, client, prefix, command, args):
-        self.received.append((prefix, command, args))
+    def have_raw_message(self, client, message):
+        self.received.append((message.prefix, message.command, message.args))
 
-        if command in self.terminate_on:
+        if message.command in self.terminate_on:
             client.terminate()
 
     def did_receive(self, command):
@@ -50,12 +50,12 @@ class LogPlugin(object):
         )
         return self
 
-    def have_raw_message(self, client, prefix, command, args):
+    def have_raw_message(self, client, message):
         self.logger.debug(
             '{client.host}: ({prefix}) {command} {args}'.format(
                 client=client,
-                prefix=prefix,
-                command=command,
-                args=args
+                prefix=message.prefix,
+                command=message.command,
+                args=message.args
             )
         )

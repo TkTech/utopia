@@ -34,14 +34,14 @@ def test_unicode_privmsg():
     got_message = Container()
     got_message.value = False
 
-    def on_376(client, prefix, target, args):
+    def on_376(client, message):
         client.join_channel('#test')
 
-    def on_join(client, prefix, target, args):
+    def on_join(client, message):
         client.privmsg('#test', TEST_STRING)
 
-    def on_privmsg(client, prefix, target, args):
-        got_message.value = (args[0] == TEST_STRING)
+    def on_privmsg(client, message):
+        got_message.value = (message.args[0] == TEST_STRING)
         client1.terminate()
         client2.terminate()
 
