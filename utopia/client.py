@@ -92,7 +92,7 @@ class CoreClient(object):
 
         # Message class which is used for parsing.
         # Plugins can change this to alter parsing (e.g. useful for IRCv3).
-        self._message_parser = utopia.parsing.RFC1459Message
+        self._message_parser = utopia.parsing.Message
 
     @property
     def host(self):

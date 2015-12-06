@@ -8,7 +8,8 @@ from collections import namedtuple
 Prefix = namedtuple('Prefix', ['nick', 'user', 'host'])
 
 
-class RFC1459Message(object):
+# TODO think about something smarter
+class Message(object):
     def __init__(self, prefix, command, args, _raw=None, **kwargs):
         self.__dict__['prefix'] = prefix
         self.__dict__['command'] = command.upper()

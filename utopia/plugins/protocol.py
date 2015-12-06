@@ -94,8 +94,9 @@ class EasyProtocolPlugin(ProtocolPlugin):
             target = message.args[0]
 
             if utopia.parsing.X_DELIM in message.args[1]:
-                normal_msgs, extended_msgs = \
+                normal_msgs, extended_msgs = (
                     utopia.parsing.extract_ctcp(message.args[1])
+                )
 
                 if extended_msgs:
                     is_priv = message.command == 'PRIVMSG'
