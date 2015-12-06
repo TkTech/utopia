@@ -87,12 +87,12 @@ class CoreClient(object):
         # be sent as this encoding and decoded on arrival using this encoding.
         self._encoding = 'utf-8'
 
-        # Setup plugins.
-        self._plugins = [p.bind(self) for p in plugins or []]
-
         # Message class which is used for parsing.
         # Plugins can change this to alter parsing (e.g. useful for IRCv3).
-        self._message_parser = utopia.parsing.Message
+        self._message_cls = utopia.parsing.Message
+
+        # Setup plugins.
+        self._plugins = [p.bind(self) for p in plugins or []]
 
     @property
     def host(self):
@@ -182,7 +182,7 @@ class CoreClient(object):
             message_buffer += message_chunk
             while '\r\n' in message_buffer:
                 line, message_buffer = message_buffer.split('\r\n', 1)
-                message = self._message_parser.parse(line)
+                message = self._message_cls.parse(line)
                 gevent.spawn(
                     signals.on_raw_message.send,
                     self,
@@ -209,7 +209,7 @@ class CoreClient(object):
         will be prepended by ':'.
 
         :param command: The command to send (ex: PING, NICK)
-        :param *args: Arguments for the given command.
+        :param args: Arguments for the given command.
         """
         message = [command]
         if args:

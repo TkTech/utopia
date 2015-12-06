@@ -28,8 +28,9 @@ class ProtocolPlugin(object):
 
         new_message.target = None
         if message.command in self._target_commands:
-            new_message.target, new_message.args = \
+            new_message.target, new_message.args = (
                 message.args[0], message.args[1:]
+            )
 
         getattr(signals.m, 'on_' + message.command).send(
             client, message=new_message
@@ -106,16 +107,14 @@ class EasyProtocolPlugin(ProtocolPlugin):
 
                         # generic on_CTCP or on_CTCPREPLY event
                         generic = message.copy()
-                        generic.tag = tag
-                        generic.args = data
+                        generic.set(tag=tag, args=data)
                         getattr(signals.m, 'on_' + type_).send(
                             client, message=generic
                         )
 
                         # specific CTCP or CTCPREPLY event, e.g. on_CTCP_VERSION
                         specific = message.copy()
-                        specific.tag = tag
-                        specific.args = data
+                        specific.set(tag=tag, args=data)
                         getattr(signals.m, 'on_{0}_{1}'.format(type_, tag)).send(
                             client, message=specific
                         )

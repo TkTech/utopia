@@ -11,26 +11,58 @@ Prefix = namedtuple('Prefix', ['nick', 'user', 'host'])
 # TODO think about something smarter
 class Message(object):
     def __init__(self, prefix, command, args, _raw=None, **kwargs):
-        self.__dict__['prefix'] = prefix
-        self.__dict__['command'] = command.upper()
-        self.__dict__['args'] = args
-        self.__dict__['_raw'] = _raw
-        self.__dict__.update(kwargs)
+        self._attrs = dict()
+        self._attrs['prefix'] = prefix
+        self._attrs['command'] = command.upper()
+        self._attrs['args'] = args
+        self._attrs.update(kwargs)
+
+        self._raw = _raw
+
+    def __getattr__(self, name):
+        try:
+            return self.__getattribute__(name)
+        except AttributeError:
+            pass
+
+        try:
+            return object.__getattribute__(self, '_attrs')[name]
+        except KeyError:
+            raise AttributeError(
+                '\'{0}\' object has no attribute \'{1}\''
+                .format(self.__class__.__name__, name)
+            )
+
+    def __setattr__(self, key, value):
+        try:
+            if key in self._attrs:
+                self._attrs[key] = value
+        except AttributeError:
+            # This happens if self._attrs doesn't exist yet
+            pass
+        object.__setattr__(self, key, value)
+
+    def set(self, **kwargs):
+        self._attrs.update(kwargs)
 
     @classmethod
     def parse(cls, line):
-        return cls(*unpack_message(line), raw=line)
+        return cls(*unpack_message(line), _raw=line)
 
     # TODO: build() method
 
     def as_dict(self):
-        return self.__dict__.copy()
+        return self._attrs.copy()
 
     def copy(self):
-        return self.__class__(**self.__dict__)
+        return self.__class__(**self._attrs)
 
     def __repr__(self):
-        return '({self.prefix}, {self.command}, {self.args})'.format(self=self)
+        return '{prefix} {command} {args}'.format(
+            prefix=pack_prefix(self.prefix),
+            command=self.command,
+            args=self.args
+        )
 
 
 def unpack_message(line):
@@ -263,6 +295,18 @@ def unpack_prefix(prefix):
         prefix, user = prefix.split('!', 1)
 
     return Prefix(prefix, user, host)
+
+
+def pack_prefix(prefix):
+    result = prefix.nick
+
+    if prefix.user:
+        result = '{0}!{1}'.format(result, prefix.user)
+
+    if prefix.host:
+        result = '{0}@{1}'.format(result, prefix.host)
+
+    return result
 
 
 def ssplit(str_, length=420):

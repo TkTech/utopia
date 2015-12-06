@@ -52,10 +52,8 @@ class LogPlugin(object):
 
     def have_raw_message(self, client, message):
         self.logger.debug(
-            '{client.host}: ({prefix}) {command} {args}'.format(
+            '{client.host}: {message!r}'.format(
                 client=client,
-                prefix=message.prefix,
-                command=message.command,
-                args=message.args
+                message=message
             )
         )

@@ -43,4 +43,13 @@ This typically means the client has received RPL_WELCOME.
 :param client: The client receiving this message.
 """)
 
+on_negotiation_done = signal('on-negotiation-done', doc="""
+This needs to be triggered if an IRCv3 negotiation is completed.
+This is only required if the capability set its status to
+'Negotiation.IN_PROGRESS' previously.
+
+:param client: The client which was part of the negotiation.
+:param capability: The name of the capability which was negotiated.
+""")
+
 m = LazySignalProxy()
