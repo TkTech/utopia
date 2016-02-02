@@ -59,7 +59,7 @@ class Message(object):
 
     def __repr__(self):
         return '{prefix} {command} {args}'.format(
-            prefix=pack_prefix(self.prefix),
+            prefix=pack_prefix(self.prefix) if self.prefix else None,
             command=self.command,
             args=self.args
         )
